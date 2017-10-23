@@ -60,11 +60,11 @@ public class DurationCacheManager extends AbstractCacheManager<Long> {
 
     @Override
     protected Long getDisk(String url) {
-        return (Long) aCache.getAsObject("duration_" + url);
+        return (Long) aCache.getAsObject(PreFix.DURATION + url);
     }
 
     @Override
     protected void putDisk(String url, Long value) {
-        aCache.put("duration_" + url, value);
+        aCache.put(PreFix.DURATION + url, value);
     }
 }

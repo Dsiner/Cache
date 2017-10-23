@@ -10,6 +10,7 @@ import com.d.lib.cache.listener.CacheListener;
 import com.d.lib.cache.listener.FrameView;
 
 /**
+ * Cache -获取视频第一帧&时长
  * Created by D on 2017/10/19.
  */
 public class FrameCache {

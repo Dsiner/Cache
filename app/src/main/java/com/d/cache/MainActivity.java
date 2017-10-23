@@ -11,7 +11,7 @@ import com.d.lib.cache.FrameCache;
 
 public class MainActivity extends AppCompatActivity {
     private String testVideo = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
-    private String testVoice = "http://m10.music.126.net/20171023154125/464ea521effb45c39cd14a2d7c53751a/ymusic/363b/72ef/7661/0b373b6cdfc54e3022ef436c3ad58ec3.mp3";
+    private String testVoice = "http://m10.music.126.net/20171023155603/55eb2b8bbb0da5aa2778b0703cb9c14c/ymusic/5dd8/399b/973f/faa6c66c735437cb9ce1dd1e4333ab0b.mp3";
     private VideoPreView vpvPreview;
     private VoiceView vvDuraion;
 

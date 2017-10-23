@@ -9,6 +9,7 @@ import com.d.lib.cache.listener.CacheListener;
 import com.d.lib.cache.listener.DurationView;
 
 /**
+ * Cahce -获取媒体时长
  * Created by D on 2017/10/19.
  */
 public class DurationCache {
