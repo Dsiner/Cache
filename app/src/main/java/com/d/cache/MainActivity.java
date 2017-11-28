@@ -26,8 +26,6 @@ public class MainActivity extends AppCompatActivity {
     private void initView() {
         vpvPreview = (VideoPreView) findViewById(R.id.vpv_pre);
         vvDuraion = (VoiceView) findViewById(R.id.vv_duration);
-        FrameCache.with(getApplicationContext()).load(testVideo).placeholder(null).into(vpvPreview);
-        DurationCache.with(getApplicationContext()).load(testVoice).placeholder(0).into(vvDuraion);
     }
 
     private void initTest() {
