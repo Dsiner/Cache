@@ -6,8 +6,8 @@ Cache 2级缓存（内存、存储卡） ——针对任意对象，抽象异步
 
 ## Usage
 ```java
-        FrameCache.with(context).load(video).placeholder(null).into(preView);
-        DurationCache.with(context).load(voice).placeholder(0).into(duraionView);
+        FrameCache.with(context).load(url).placeholder(null).into(preView);
+        DurationCache.with(context).load(url).placeholder(0).into(duraionView);
         ...
 ```
 
