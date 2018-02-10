@@ -45,16 +45,16 @@ public class FrameCache {
             }
             return;
         }
-        Object tag = view.getTag(R.id.cache_frame);
+        Object tag = view.getTag(R.id.lib_cache_tag_frame);
         if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
             //not refresh
             return;
         }
-        view.setTag(R.id.cache_frame, url);
+        view.setTag(R.id.lib_cache_tag_frame, url);
         FrameCacheManager.getInstance(context).load(context, url, new CacheListener<FrameBean>() {
             @Override
             public void onLoading() {
-                Object tag = view.getTag(R.id.cache_frame);
+                Object tag = view.getTag(R.id.lib_cache_tag_frame);
                 if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
                     if (view instanceof FrameView) {
                         ((FrameView) view).setFrame(placeholder, 0L);
@@ -64,7 +64,7 @@ public class FrameCache {
 
             @Override
             public void onSuccess(FrameBean result) {
-                Object tag = view.getTag(R.id.cache_frame);
+                Object tag = view.getTag(R.id.lib_cache_tag_frame);
                 if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
                     if (view instanceof FrameView) {
                         ((FrameView) view).setFrame(result.drawable, result.duration);
@@ -74,7 +74,7 @@ public class FrameCache {
 
             @Override
             public void onError() {
-                Object tag = view.getTag(R.id.cache_frame);
+                Object tag = view.getTag(R.id.lib_cache_tag_frame);
                 if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
                     if (view instanceof FrameView) {
                         ((FrameView) view).setFrame(placeholder, 0L);

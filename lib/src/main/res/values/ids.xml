@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="cache_duration" type="id" />
-    <item name="cache_frame" type="id" />
+    <item name="lib_cache_tag_duration" type="id" />
+    <item name="lib_cache_tag_frame" type="id" />
 </resources>

@@ -44,12 +44,12 @@ public class DurationCache {
             }
             return;
         }
-        Object tag = view.getTag(R.id.cache_duration);
+        Object tag = view.getTag(R.id.lib_cache_tag_duration);
         if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
             //not refresh
             return;
         }
-        view.setTag(R.id.cache_duration, url);
+        view.setTag(R.id.lib_cache_tag_duration, url);
         DurationCacheManager.getInstance(context).load(context, url, new CacheListener<Long>() {
             @Override
             public void onLoading() {
@@ -58,7 +58,7 @@ public class DurationCache {
 
             @Override
             public void onSuccess(Long result) {
-                Object tag = view.getTag(R.id.cache_duration);
+                Object tag = view.getTag(R.id.lib_cache_tag_duration);
                 if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
                     if (view instanceof DurationView) {
                         ((DurationView) view).setDuration(result);
@@ -68,7 +68,7 @@ public class DurationCache {
 
             @Override
             public void onError() {
-                Object tag = view.getTag(R.id.cache_duration);
+                Object tag = view.getTag(R.id.lib_cache_tag_duration);
                 if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
                     if (view instanceof DurationView) {
                         ((DurationView) view).setDuration(placeholder);
