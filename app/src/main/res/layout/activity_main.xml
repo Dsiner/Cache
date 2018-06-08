@@ -26,7 +26,8 @@
             android:id="@+id/iv_preview"
             android:layout_width="0dp"
             android:layout_height="95dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:scaleType="centerCrop" />
     </LinearLayout>
 
     <Button
