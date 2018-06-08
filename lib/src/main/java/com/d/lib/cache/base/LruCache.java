@@ -21,7 +21,9 @@ public class LruCache<K, V> {
 
     public void put(K key, V value) {
         calculateSize(key);
-        map.put(key, value);
+        if (count > 0) {
+            map.put(key, value);
+        }
     }
 
     public V get(K key) {
@@ -36,11 +38,15 @@ public class LruCache<K, V> {
         map.remove(key);
     }
 
+    public void clear() {
+        map.clear();
+    }
+
     private void calculateSize(K key) {
-        if (map.size() > count && !map.containsKey(key)) {
+        if (map.size() >= count && !map.containsKey(key)) {
             Iterator ite = map.entrySet().iterator();
             if (ite.hasNext()) {
-                Map.Entry<String, String> entry = (Map.Entry) ite.next();
+                Map.Entry<K, V> entry = (Map.Entry<K, V>) ite.next();
                 map.remove(entry.getKey());
             }
         }

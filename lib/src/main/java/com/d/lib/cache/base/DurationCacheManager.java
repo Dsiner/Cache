@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import com.d.lib.cache.listener.CacheListener;
 
@@ -44,13 +45,15 @@ public class DurationCacheManager extends AbstractCacheManager<Long> {
             } else {
                 mmr.setDataSource(context, Uri.parse(url));
             }
-            String strDuration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);//时长(毫秒)
-            final long duration = Long.parseLong(strDuration);
+            //Get duration(milliseconds)
+            String strDuration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            long duration = Long.parseLong(strDuration);
             putDisk(url, duration);
             success(url, duration, listener);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            error(url, listener);
+        } catch (Throwable e) {
+            Log.e("Cache", e.toString());
+            e.printStackTrace();
+            error(url, e, listener);
         } finally {
             if (mmr != null) {
                 mmr.release();

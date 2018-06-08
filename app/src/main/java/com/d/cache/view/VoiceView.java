@@ -1,14 +1,17 @@
 package com.d.cache.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
 import com.d.lib.cache.listener.DurationView;
+import com.d.lib.cache.utils.CacheUtil;
 
 /**
  * Created by D on 2017/10/23.
  */
+@SuppressLint("AppCompatCustomView")
 public class VoiceView extends TextView implements DurationView {
     public VoiceView(Context context) {
         this(context, null);
@@ -24,6 +27,6 @@ public class VoiceView extends TextView implements DurationView {
 
     @Override
     public void setDuration(Long duration) {
-        setText("时长：" + duration + "ms");
+        setText("Duration：" + CacheUtil.formatTime(duration));
     }
 }

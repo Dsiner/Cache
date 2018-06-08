@@ -6,17 +6,18 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
-import com.d.lib.cache.FrameCache;
+import com.d.lib.cache.bean.FrameBean;
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.util.CacheUtil;
+import com.d.lib.cache.utils.CacheUtil;
 
 import java.util.HashMap;
 
 /**
  * Created by D on 2017/10/18.
  */
-public class FrameCacheManager extends AbstractCacheManager<FrameCache.FrameBean> {
+public class FrameCacheManager extends AbstractCacheManager<FrameBean> {
     private static FrameCacheManager manager;
 
     public static FrameCacheManager getInstance(Context context) {
@@ -36,7 +37,8 @@ public class FrameCacheManager extends AbstractCacheManager<FrameCache.FrameBean
     }
 
     @Override
-    protected void absLoad(Context context, String url, CacheListener<FrameCache.FrameBean> listener) {
+    protected void absLoad(Context context, String url, CacheListener<FrameBean> listener) {
+        //Also can use ThumbnailUtils.createVideoThumbnail(url, MediaStore.Images.Thumbnails.MINI_KIND);
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && url.contains("://")) {
@@ -44,19 +46,24 @@ public class FrameCacheManager extends AbstractCacheManager<FrameCache.FrameBean
                 headers.put("User-Agent", "Mozilla/5.0 (Linux; U; Android 4.4.2; zh-CN;"
                         + " MW-KW-001 Build/JRO03C) AppleWebKit/533.1 (KHTML, like Gecko) "
                         + "Version/4.0 UCBrowser/1.0.0.001 U4/0.8.0 Mobile Safari/533.1");
+                mmr.setDataSource(url, headers);
             } else {
                 mmr.setDataSource(context, Uri.parse(url));
             }
-            final Bitmap bitmap = mmr.getFrameAtTime();//获取第一帧图片
-            long duration = Long.parseLong(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));//时长(毫秒
-            FrameCache.FrameBean frameBean = new FrameCache.FrameBean();
+            //Get the first frame picture
+            Bitmap bitmap = mmr.getFrameAtTime();
+            //Get duration(milliseconds)
+            long duration = Long.parseLong(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+            FrameBean frameBean = new FrameBean();
             frameBean.drawable = CacheUtil.bitmapToDrawableByBD(bitmap);
             frameBean.duration = duration;
-            putDisk(url, frameBean);//save to disk
+            //Save to disk
+            putDisk(url, frameBean);
             success(url, frameBean, listener);
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            Log.e("Cache", e.toString());
             e.printStackTrace();
-            error(url, listener);
+            error(url, e, listener);
         } finally {
             if (mmr != null) {
                 mmr.release();
@@ -65,21 +72,21 @@ public class FrameCacheManager extends AbstractCacheManager<FrameCache.FrameBean
     }
 
     @Override
-    protected FrameCache.FrameBean getDisk(String url) {
-        Drawable drawable = aCache.getAsDrawable(url);
+    protected FrameBean getDisk(String url) {
+        Drawable drawable = aCache.getAsDrawable(PreFix.FRAME + url);
         Long duration = (Long) aCache.getAsObject(PreFix.DURATION + url);
         if (drawable == null || duration == null) {
             return null;
         }
-        FrameCache.FrameBean value = new FrameCache.FrameBean();
+        FrameBean value = new FrameBean();
         value.drawable = drawable;
         value.duration = duration;
         return value;
     }
 
     @Override
-    protected void putDisk(String url, FrameCache.FrameBean value) {
-        aCache.put(url, value.drawable);//save to disk
-        aCache.put(PreFix.DURATION + url, value.duration);//save to disk
+    protected void putDisk(String url, FrameBean value) {
+        aCache.put(PreFix.FRAME + url, value.drawable);
+        aCache.put(PreFix.DURATION + url, value.duration);
     }
 }

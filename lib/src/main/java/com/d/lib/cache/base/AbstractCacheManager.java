@@ -5,7 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.util.TaskManager;
+import com.d.lib.cache.utils.TaskManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,35 +44,52 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
     }
 
     protected void success(final String url, final T value, final CacheListener<T> l) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                putLru(url, value);//save to cache
-                ArrayList<CacheListener<T>> listeners = hashMap.get(url);
-                if (listeners != null) {
-                    for (int i = 0; i < listeners.size(); i++) {
-                        CacheListener<T> listener = listeners.get(i);
-                        listener.onSuccess(value);
-                    }
-                    hashMap.remove(url);
+        if (!TaskManager.isMainThread()) {
+            TaskManager.getIns().executeMain(new Runnable() {
+                @Override
+                public void run() {
+                    successImplementation(url, value);
                 }
-            }
-        });
+            });
+            return;
+        }
+        successImplementation(url, value);
     }
 
-    protected void error(final String url, final CacheListener<T> listener) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                ArrayList<CacheListener<T>> listeners = hashMap.get(url);
-                if (listeners != null) {
-                    for (int i = 0; i < listeners.size(); i++) {
-                        listeners.get(i).onError();
-                    }
-                    hashMap.remove(url);
-                }
+    private void successImplementation(final String url, final T value) {
+        //Save to cache
+        putLru(url, value);
+        ArrayList<CacheListener<T>> listeners = hashMap.get(url);
+        if (listeners != null) {
+            for (int i = 0; i < listeners.size(); i++) {
+                CacheListener<T> listener = listeners.get(i);
+                listener.onSuccess(value);
             }
-        });
+            hashMap.remove(url);
+        }
+    }
+
+    protected void error(final String url, final Throwable e, final CacheListener<T> listener) {
+        if (!TaskManager.isMainThread()) {
+            TaskManager.getIns().executeMain(new Runnable() {
+                @Override
+                public void run() {
+                    errorImplementation(url, e);
+                }
+            });
+            return;
+        }
+        errorImplementation(url, e);
+    }
+
+    private void errorImplementation(final String url, final Throwable e) {
+        ArrayList<CacheListener<T>> listeners = hashMap.get(url);
+        if (listeners != null) {
+            for (int i = 0; i < listeners.size(); i++) {
+                listeners.get(i).onError(e);
+            }
+            hashMap.remove(url);
+        }
     }
 
     protected boolean isLoading(final String url, final CacheListener<T> l) {
@@ -113,6 +130,10 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
             return true;
         }
         return false;
+    }
+
+    public void release() {
+        lruCache.clear();
     }
 
     protected abstract void absLoad(final Context context, final String url, final CacheListener<T> listener);

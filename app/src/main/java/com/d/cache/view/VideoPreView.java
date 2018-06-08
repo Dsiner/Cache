@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.d.cache.R;
 import com.d.lib.cache.listener.FrameView;
+import com.d.lib.cache.utils.CacheUtil;
 
 /**
  * Created by D on 2017/10/23.
@@ -34,13 +35,13 @@ public class VideoPreView extends FrameLayout implements FrameView {
 
     private void init(Context context) {
         View root = LayoutInflater.from(context).inflate(R.layout.view_video_pre, this);
-        ivPreview = (ImageView) root.findViewById(R.id.iv_preview);
-        tvDuration = (TextView) root.findViewById(R.id.tv_duration);
+        ivPreview = (ImageView) root.findViewById(R.id.iv_pre_preview);
+        tvDuration = (TextView) root.findViewById(R.id.tv_pre_duration);
     }
 
     @Override
     public void setFrame(Drawable drawable, Long duration) {
         ivPreview.setImageDrawable(drawable);
-        tvDuration.setText("时长：" + duration + "ms");
+        tvDuration.setText("Duration：" + CacheUtil.formatTime(duration));
     }
 }

@@ -6,7 +6,7 @@ package com.d.lib.cache.listener;
 public interface CacheListener<T> {
     void onLoading();
 
-    void onSuccess(T resule);
+    void onSuccess(T result);
 
-    void onError();
+    void onError(Throwable e);
 }

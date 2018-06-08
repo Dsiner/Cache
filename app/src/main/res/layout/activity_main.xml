@@ -5,10 +5,29 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <com.d.cache.view.VideoPreView
-        android:id="@+id/vpv_pre"
-        android:layout_width="156dp"
-        android:layout_height="95dp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="5dp">
+
+        <com.d.cache.view.VideoPreView
+            android:id="@+id/vpv_preview"
+            android:layout_width="0dp"
+            android:layout_height="95dp"
+            android:layout_weight="1" />
+
+        <View
+            android:layout_width="12dp"
+            android:layout_height="1px" />
+
+        <ImageView
+            android:id="@+id/iv_preview"
+            android:layout_width="0dp"
+            android:layout_height="95dp"
+            android:layout_weight="1" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/btn_frame"
@@ -22,12 +41,35 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:background="@color/colorAccent"
         android:gravity="center_vertical"
         android:padding="6dp"
-        android:text="时长："
-        android:textColor="#ffffff"
+        android:text="Duration："
+        android:textColor="#000000"
         android:textSize="12dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:padding="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:text="Duration："
+            android:textColor="#000000"
+            android:textSize="12dp" />
+
+        <TextView
+            android:id="@+id/tv_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:textColor="#000000"
+            android:textSize="12dp" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/btn_duration"

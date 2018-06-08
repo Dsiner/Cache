@@ -9,7 +9,7 @@ public class CacheManager {
     protected static ACache aCache;
 
     protected CacheManager(Context context) {
-        init(context);
+        init(context.getApplicationContext());
     }
 
     private void init(Context context) {

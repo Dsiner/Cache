@@ -2,101 +2,149 @@ package com.d.lib.cache;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.UiThread;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.ImageView;
 
+import com.d.lib.cache.base.AbstractCache;
 import com.d.lib.cache.base.FrameCacheManager;
+import com.d.lib.cache.bean.FrameBean;
+import com.d.lib.cache.exception.CacheException;
 import com.d.lib.cache.listener.CacheListener;
 import com.d.lib.cache.listener.FrameView;
 
+import java.lang.ref.WeakReference;
+
 /**
- * Cache -获取视频第一帧&时长
+ * Cache - Get video first frame & duration
  * Created by D on 2017/10/19.
  */
-public class FrameCache {
-    private Context context;
-    private String url;
-    private Drawable placeholder;
+public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable, FrameBean> {
 
+    private FrameCache(Context context) {
+        super(context);
+    }
+
+    @UiThread
     public static FrameCache with(Context context) {
-        FrameCache cache = new FrameCache();
-        cache.context = context;
-        return cache;
+        return new FrameCache(context);
     }
 
-    public FrameCache load(String url) {
-        this.url = url;
-        return this;
+    public FrameCache placeholder(int resId) {
+        if (isFinish()) {
+            return this;
+        }
+        return placeholder(ContextCompat.getDrawable(getContext(), resId));
     }
 
-    public FrameCache placeholder(Drawable drawable) {
-        this.placeholder = drawable;
-        return this;
+    public FrameCache error(int resId) {
+        if (isFinish()) {
+            return this;
+        }
+        return error(ContextCompat.getDrawable(getContext(), resId));
     }
 
-    public void into(final View view) {
-        if (view == null) {
+    @Override
+    public void into(View view) {
+        if (isFinish() || view == null) {
             return;
         }
+        target = new WeakReference<>(view);
         if (TextUtils.isEmpty(url)) {
-            //just error
+            //Just error
             if (view instanceof FrameView) {
-                ((FrameView) view).setFrame(placeholder, 0L);
+                ((FrameView) view).setFrame(error != null ? error : placeHolder, 0L);
+            } else if (view instanceof ImageView) {
+                ((ImageView) view).setImageDrawable(error != null ? error : placeHolder);
             }
             return;
         }
         Object tag = view.getTag(R.id.lib_cache_tag_frame);
         if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-            //not refresh
+            //Not refresh
             return;
         }
         view.setTag(R.id.lib_cache_tag_frame, url);
-        FrameCacheManager.getInstance(context).load(context, url, new CacheListener<FrameBean>() {
-            @Override
-            public void onLoading() {
-                Object tag = view.getTag(R.id.lib_cache_tag_frame);
-                if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                    if (view instanceof FrameView) {
-                        ((FrameView) view).setFrame(placeholder, 0L);
+        FrameCacheManager.getInstance(getContext().getApplicationContext())
+                .load(getContext().getApplicationContext(), url, new CacheListener<FrameBean>() {
+                    @Override
+                    public void onLoading() {
+                        if (isFinish() || getTarget() == null) {
+                            return;
+                        }
+                        Object tag = getTarget().getTag(R.id.lib_cache_tag_frame);
+                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
+                            if (getTarget() instanceof FrameView) {
+                                ((FrameView) getTarget()).setFrame(placeHolder, 0L);
+                            } else if (getTarget() instanceof ImageView) {
+                                ((ImageView) getTarget()).setImageDrawable(placeHolder);
+                            }
+                        }
                     }
-                }
-            }
 
-            @Override
-            public void onSuccess(FrameBean result) {
-                Object tag = view.getTag(R.id.lib_cache_tag_frame);
-                if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                    if (view instanceof FrameView) {
-                        ((FrameView) view).setFrame(result.drawable, result.duration);
+                    @Override
+                    public void onSuccess(FrameBean result) {
+                        if (isFinish() || getTarget() == null) {
+                            return;
+                        }
+                        Object tag = getTarget().getTag(R.id.lib_cache_tag_frame);
+                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
+                            if (getTarget() instanceof FrameView) {
+                                ((FrameView) getTarget()).setFrame(result.drawable, result.duration);
+                            } else if (getTarget() instanceof ImageView) {
+                                ((ImageView) getTarget()).setImageDrawable(result.drawable);
+                            }
+                        }
                     }
-                }
-            }
 
-            @Override
-            public void onError() {
-                Object tag = view.getTag(R.id.lib_cache_tag_frame);
-                if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                    if (view instanceof FrameView) {
-                        ((FrameView) view).setFrame(placeholder, 0L);
+                    @Override
+                    public void onError(Throwable e) {
+                        if (isFinish() || getTarget() == null) {
+                            return;
+                        }
+                        Object tag = getTarget().getTag(R.id.lib_cache_tag_frame);
+                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
+                            if (getTarget() instanceof FrameView) {
+                                ((FrameView) getTarget()).setFrame(error != null ? error : placeHolder, 0L);
+                            } else if (getTarget() instanceof ImageView) {
+                                ((ImageView) getTarget()).setImageDrawable(error != null ? error : placeHolder);
+                            }
+                        }
                     }
-                }
-            }
-        });
+                });
     }
 
+    @Override
     public void listener(CacheListener<FrameBean> l) {
+        if (isFinish()) {
+            return;
+        }
         if (TextUtils.isEmpty(url)) {
-            //just error
+            //Just error
             if (l != null) {
-                l.onError();
+                l.onError(new CacheException("Url must not be empty!"));
             }
             return;
         }
-        FrameCacheManager.getInstance(context).load(context, url, l);
+        FrameCacheManager.getInstance(getContext().getApplicationContext())
+                .load(getContext().getApplicationContext(), url, l);
     }
 
-    public static class FrameBean {
-        public Drawable drawable;
-        public Long duration;
+    @UiThread
+    public static void clear(View view) {
+        if (view == null) {
+            return;
+        }
+        view.setTag(R.id.lib_cache_tag_frame, "");
+    }
+
+    @UiThread
+    public static void release(Context context) {
+        if (context == null) {
+            return;
+        }
+        FrameCacheManager.getInstance(context.getApplicationContext()).release();
     }
 }

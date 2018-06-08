@@ -4,18 +4,17 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/iv_preview"
+        android:id="@+id/iv_pre_preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:src="@color/colorPrimaryDark" />
+        android:scaleType="centerCrop" />
 
     <TextView
-        android:id="@+id/tv_duration"
+        android:id="@+id/tv_pre_duration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="时长："
+        android:text="Duration："
         android:textColor="#ffffff"
         android:textSize="14dp" />
 </FrameLayout>
