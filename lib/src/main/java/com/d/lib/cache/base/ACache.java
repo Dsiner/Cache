@@ -23,7 +23,7 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
-import com.d.lib.cache.utils.thread.TaskScheduler;
+import com.d.lib.cache.utils.threadpool.ThreadPool;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -611,7 +611,7 @@ public class ACache {
          * 计算cacheSize和cacheCount
          */
         private void calculateCacheSizeAndCacheCount() {
-            TaskScheduler.executeNew(new Runnable() {
+            ThreadPool.getIns().executeNew(new Runnable() {
                 @Override
                 public void run() {
                     int size = 0;

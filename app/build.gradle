@@ -28,4 +28,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation project(':lib')
     implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.dsiner.lib:taskscheduler:1.0.1'
 }

@@ -5,7 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.utils.thread.TaskScheduler;
+import com.d.lib.cache.utils.threadpool.ThreadPool;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
         if (isLru(url, listener)) {
             return;
         }
-        TaskScheduler.executeTask(new Runnable() {
+        ThreadPool.getIns().executeTask(new Runnable() {
             @Override
             public void run() {
                 if (isDisk(url, listener)) {
@@ -44,7 +44,7 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
     }
 
     protected void success(final String url, final T value, final CacheListener<T> l) {
-        TaskScheduler.executeMain(new Runnable() {
+        ThreadPool.getIns().executeMain(new Runnable() {
             @Override
             public void run() {
                 successImplementation(url, value);
@@ -66,7 +66,7 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
     }
 
     protected void error(final String url, final Throwable e, final CacheListener<T> listener) {
-        TaskScheduler.executeMain(new Runnable() {
+        ThreadPool.getIns().executeMain(new Runnable() {
             @Override
             public void run() {
                 errorImplementation(url, e);
