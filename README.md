@@ -4,7 +4,7 @@
 [![API](https://img.shields.io/badge/API-10%2B-green.svg?style=flat)](https://android-arsenal.com/api?level=10)
 [![Readme](https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-brightgreen.svg)](https://github.com/Dsiner/Cache/blob/master/README-zh.md)
 
-> Level 2 Cache ( `memory` , `sdcard` ) - Abstract asynchronous time-consuming operation for any object, main thread callback, chained call.
+> Level 3 cache ( `memory` , `local`, `network` ) - Abstract asynchronous time-consuming operation for any object, main thread callback, chained call.
 
 ## Demo
 <p>
@@ -12,8 +12,8 @@
 </p>
 
 ## Implementation list
-- [x] `FrameCache` - Get the first frame and duration of local or web video.
-- [x] `DurationCache` - Get local or web audio duration.
+- [x] `FrameCache` - Get the first frame and duration of local or network video.
+- [x] `DurationCache` - Get local or network audio duration.
 
 ## Usage
 ```java

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.d.lib.cache.listener.CacheListener;
@@ -14,7 +15,7 @@ import java.util.HashMap;
  * Created by D on 2017/10/18.
  */
 public class DurationCacheManager extends AbstractCacheManager<Long> {
-    private static DurationCacheManager manager;
+    private volatile static DurationCacheManager manager;
 
     public static DurationCacheManager getInstance(Context context) {
         if (manager == null) {
@@ -32,6 +33,7 @@ public class DurationCacheManager extends AbstractCacheManager<Long> {
         lruCache.setCount(180);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
     protected void absLoad(Context context, String url, CacheListener<Long> listener) {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
@@ -45,7 +47,7 @@ public class DurationCacheManager extends AbstractCacheManager<Long> {
             } else {
                 mmr.setDataSource(context, Uri.parse(url));
             }
-            //Get duration(milliseconds)
+            // Get duration(milliseconds)
             String strDuration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
             long duration = Long.parseLong(strDuration);
             putDisk(url, duration);

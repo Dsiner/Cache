@@ -6,11 +6,12 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.d.lib.cache.bean.FrameBean;
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.utils.CacheUtil;
+import com.d.lib.cache.utils.Util;
 
 import java.util.HashMap;
 
@@ -18,7 +19,7 @@ import java.util.HashMap;
  * Created by D on 2017/10/18.
  */
 public class FrameCacheManager extends AbstractCacheManager<FrameBean> {
-    private static FrameCacheManager manager;
+    private volatile static FrameCacheManager manager;
 
     public static FrameCacheManager getInstance(Context context) {
         if (manager == null) {
@@ -36,9 +37,10 @@ public class FrameCacheManager extends AbstractCacheManager<FrameBean> {
         lruCache.setCount(12);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
     protected void absLoad(Context context, String url, CacheListener<FrameBean> listener) {
-        //Also can use ThumbnailUtils.createVideoThumbnail(url, MediaStore.Images.Thumbnails.MINI_KIND);
+        // Also can use ThumbnailUtils.createVideoThumbnail(url, MediaStore.Images.Thumbnails.MINI_KIND);
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && url.contains("://")) {
@@ -50,14 +52,14 @@ public class FrameCacheManager extends AbstractCacheManager<FrameBean> {
             } else {
                 mmr.setDataSource(context, Uri.parse(url));
             }
-            //Get the first frame picture
+            // Get the first frame picture
             Bitmap bitmap = mmr.getFrameAtTime();
-            //Get duration(milliseconds)
+            // Get duration(milliseconds)
             long duration = Long.parseLong(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
             FrameBean frameBean = new FrameBean();
-            frameBean.drawable = CacheUtil.bitmapToDrawableByBD(bitmap);
+            frameBean.drawable = Util.bitmapToDrawableByBD(bitmap);
             frameBean.duration = duration;
-            //Save to disk
+            // Save to disk
             putDisk(url, frameBean);
             success(url, frameBean, listener);
         } catch (Throwable e) {

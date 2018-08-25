@@ -5,7 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.utils.TaskManager;
+import com.d.lib.cache.utils.thread.TaskScheduler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
         if (isLru(url, listener)) {
             return;
         }
-        TaskManager.getIns().executeTask(new Runnable() {
+        TaskScheduler.executeTask(new Runnable() {
             @Override
             public void run() {
                 if (isDisk(url, listener)) {
@@ -44,20 +44,16 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
     }
 
     protected void success(final String url, final T value, final CacheListener<T> l) {
-        if (!TaskManager.isMainThread()) {
-            TaskManager.getIns().executeMain(new Runnable() {
-                @Override
-                public void run() {
-                    successImplementation(url, value);
-                }
-            });
-            return;
-        }
-        successImplementation(url, value);
+        TaskScheduler.executeMain(new Runnable() {
+            @Override
+            public void run() {
+                successImplementation(url, value);
+            }
+        });
     }
 
     private void successImplementation(final String url, final T value) {
-        //Save to cache
+        // Save to cache
         putLru(url, value);
         ArrayList<CacheListener<T>> listeners = hashMap.get(url);
         if (listeners != null) {
@@ -70,16 +66,12 @@ public abstract class AbstractCacheManager<T> extends CacheManager {
     }
 
     protected void error(final String url, final Throwable e, final CacheListener<T> listener) {
-        if (!TaskManager.isMainThread()) {
-            TaskManager.getIns().executeMain(new Runnable() {
-                @Override
-                public void run() {
-                    errorImplementation(url, e);
-                }
-            });
-            return;
-        }
-        errorImplementation(url, e);
+        TaskScheduler.executeMain(new Runnable() {
+            @Override
+            public void run() {
+                errorImplementation(url, e);
+            }
+        });
     }
 
     private void errorImplementation(final String url, final Throwable e) {

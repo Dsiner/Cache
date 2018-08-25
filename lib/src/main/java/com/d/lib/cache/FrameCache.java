@@ -2,6 +2,9 @@ package com.d.lib.cache;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.support.annotation.DrawableRes;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.UiThread;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
@@ -21,6 +24,7 @@ import java.lang.ref.WeakReference;
  * Cache - Get video first frame & duration
  * Created by D on 2017/10/19.
  */
+@RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
 public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable, FrameBean> {
 
     private FrameCache(Context context) {
@@ -32,14 +36,14 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
         return new FrameCache(context);
     }
 
-    public FrameCache placeholder(int resId) {
+    public FrameCache placeholder(@DrawableRes int resId) {
         if (isFinish()) {
             return this;
         }
         return placeholder(ContextCompat.getDrawable(getContext(), resId));
     }
 
-    public FrameCache error(int resId) {
+    public FrameCache error(@DrawableRes int resId) {
         if (isFinish()) {
             return this;
         }
@@ -53,7 +57,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
         }
         target = new WeakReference<>(view);
         if (TextUtils.isEmpty(url)) {
-            //Just error
+            // Just error
             if (view instanceof FrameView) {
                 ((FrameView) view).setFrame(error != null ? error : placeHolder, 0L);
             } else if (view instanceof ImageView) {
@@ -63,7 +67,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
         }
         Object tag = view.getTag(R.id.lib_cache_tag_frame);
         if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-            //Not refresh
+            // Not refresh
             return;
         }
         view.setTag(R.id.lib_cache_tag_frame, url);
@@ -122,7 +126,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
             return;
         }
         if (TextUtils.isEmpty(url)) {
-            //Just error
+            // Just error
             if (l != null) {
                 l.onError(new CacheException("Url must not be empty!"));
             }
@@ -132,6 +136,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
                 .load(getContext().getApplicationContext(), url, l);
     }
 
+    @SuppressWarnings("unused")
     @UiThread
     public static void clear(View view) {
         if (view == null) {
@@ -140,6 +145,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
         view.setTag(R.id.lib_cache_tag_frame, "");
     }
 
+    @SuppressWarnings("unused")
     @UiThread
     public static void release(Context context) {
         if (context == null) {

@@ -6,7 +6,7 @@ android {
     resourcePrefix 'lib_cache_'
 
     defaultConfig {
-        minSdkVersion 9
+        minSdkVersion 10
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"

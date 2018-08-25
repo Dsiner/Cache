@@ -7,7 +7,7 @@ import android.graphics.drawable.Drawable;
 /**
  * Created by D on 2017/10/23.
  */
-public class CacheUtil {
+public class Util {
 
     /**
      * Bitmap to Drawable

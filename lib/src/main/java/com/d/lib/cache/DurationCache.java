@@ -1,7 +1,8 @@
 package com.d.lib.cache;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.UiThread;
 import android.text.TextUtils;
 import android.view.View;
@@ -12,14 +13,15 @@ import com.d.lib.cache.base.DurationCacheManager;
 import com.d.lib.cache.exception.CacheException;
 import com.d.lib.cache.listener.CacheListener;
 import com.d.lib.cache.listener.DurationView;
-import com.d.lib.cache.utils.CacheUtil;
+import com.d.lib.cache.utils.Util;
 
 import java.lang.ref.WeakReference;
 
 /**
- * Cahce - Get media duration
+ * Cache - Get media duration
  * Created by D on 2017/10/19.
  */
+@RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
 public class DurationCache extends AbstractCache<DurationCache, View, String, Long, Long> {
 
     private DurationCache(Context context) {
@@ -31,7 +33,6 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         return new DurationCache(context);
     }
 
-    @SuppressLint("SetTextI18n")
     @Override
     public void into(final View view) {
         if (isFinish() || view == null) {
@@ -39,7 +40,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         }
         target = new WeakReference<>(view);
         if (TextUtils.isEmpty(url)) {
-            //Just error
+            // Just error
             if (view instanceof DurationView) {
                 ((DurationView) view).setDuration(error != null ? error : placeHolder);
             } else if (view instanceof TextView) {
@@ -50,7 +51,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         }
         Object tag = view.getTag(R.id.lib_cache_tag_duration);
         if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-            //Not refresh
+            // Not refresh
             return;
         }
         view.setTag(R.id.lib_cache_tag_duration, url);
@@ -69,7 +70,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
                             if (getTarget() instanceof DurationView) {
                                 ((DurationView) getTarget()).setDuration(placeHolder);
                             } else if (getTarget() instanceof TextView) {
-                                ((TextView) getTarget()).setText(CacheUtil.formatTime(placeHolder));
+                                ((TextView) getTarget()).setText(Util.formatTime(placeHolder));
                             }
                         }
                     }
@@ -82,7 +83,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
                                 ((DurationView) view).setDuration(result);
                             } else if (getTarget() instanceof TextView) {
                                 long time = result != null ? result : 0;
-                                ((TextView) getTarget()).setText(CacheUtil.formatTime(time));
+                                ((TextView) getTarget()).setText(Util.formatTime(time));
                             }
                         }
                     }
@@ -97,7 +98,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
                             if (view instanceof DurationView) {
                                 ((DurationView) view).setDuration(error);
                             } else if (getTarget() instanceof TextView) {
-                                ((TextView) getTarget()).setText(CacheUtil.formatTime(error));
+                                ((TextView) getTarget()).setText(Util.formatTime(error));
                             }
                         }
                     }
@@ -110,7 +111,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
             return;
         }
         if (TextUtils.isEmpty(url)) {
-            //Just error
+            // Just error
             if (l != null) {
                 l.onError(new CacheException("Url must not be empty!"));
             }
@@ -120,6 +121,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
                 .load(getContext().getApplicationContext(), url, l);
     }
 
+    @SuppressWarnings("unused")
     @UiThread
     public static void clear(View view) {
         if (view == null) {
@@ -128,6 +130,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         view.setTag(R.id.lib_cache_tag_duration, "");
     }
 
+    @SuppressWarnings("unused")
     @UiThread
     public static void release(Context context) {
         if (context == null) {

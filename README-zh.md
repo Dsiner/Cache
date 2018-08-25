@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![API](https://img.shields.io/badge/API-10%2B-green.svg?style=flat)](https://android-arsenal.com/api?level=10)
 
-> 2级缓存（ `内存` 、 `存储卡` ） ——针对任意对象，抽象异步耗时操作，主线程回调，链式调用
+> 3级缓存（ `内存`, `本地`, `网络` ） ——针对任意对象，抽象异步耗时操作，主线程回调，链式调用
 
 ## Demo
 <p>

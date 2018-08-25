@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.widget.TextView;
 
 import com.d.lib.cache.listener.DurationView;
-import com.d.lib.cache.utils.CacheUtil;
+import com.d.lib.cache.utils.Util;
 
 /**
  * Created by D on 2017/10/23.
@@ -27,6 +27,6 @@ public class VoiceView extends TextView implements DurationView {
 
     @Override
     public void setDuration(Long duration) {
-        setText("Duration：" + CacheUtil.formatTime(duration));
+        setText("Duration：" + Util.formatTime(duration));
     }
 }
