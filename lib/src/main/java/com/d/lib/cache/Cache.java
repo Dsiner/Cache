@@ -7,7 +7,7 @@ import com.d.lib.cache.utils.threadpool.ThreadPool;
  * Created by D on 2018/8/25.
  */
 public class Cache {
-    public static void setPool(ThreadPool pool) {
-        ThreadPool.setPool(pool);
+    public static void setThreadPool(ThreadPool pool) {
+        ThreadPool.setThreadPool(pool);
     }
 }

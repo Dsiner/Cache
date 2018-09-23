@@ -16,7 +16,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         // You can set the thread pool yourself here, otherwise the default will be used.
-        Cache.setPool(new ThreadPool() {
+        Cache.setThreadPool(new ThreadPool() {
             @Override
             public void executeMain(Runnable r) {
                 TaskScheduler.executeMain(r);
