@@ -5,14 +5,14 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
-import com.d.lib.cache.listener.DurationView;
+import com.d.lib.cache.listener.IDuration;
 import com.d.lib.cache.utils.Util;
 
 /**
  * Created by D on 2017/10/23.
  */
 @SuppressLint("AppCompatCustomView")
-public class VoiceView extends TextView implements DurationView {
+public class VoiceView extends TextView implements IDuration {
     public VoiceView(Context context) {
         this(context, null);
     }

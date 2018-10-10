@@ -10,13 +10,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.d.cache.R;
-import com.d.lib.cache.listener.FrameView;
+import com.d.lib.cache.listener.IFrame;
 import com.d.lib.cache.utils.Util;
 
 /**
  * Created by D on 2017/10/23.
  */
-public class VideoPreView extends FrameLayout implements FrameView {
+public class VideoPreView extends FrameLayout implements IFrame {
     private ImageView ivPreview;
     private TextView tvDuration;
 

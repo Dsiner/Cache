@@ -9,13 +9,11 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.d.lib.cache.base.AbstractCache;
-import com.d.lib.cache.base.DurationCacheManager;
 import com.d.lib.cache.exception.CacheException;
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.listener.DurationView;
+import com.d.lib.cache.listener.IDuration;
+import com.d.lib.cache.manager.DurationCacheManager;
 import com.d.lib.cache.utils.Util;
-
-import java.lang.ref.WeakReference;
 
 /**
  * Cache - Get media duration
@@ -28,97 +26,116 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         super(context);
     }
 
+    private static int getTag() {
+        return R.id.lib_cache_tag_duration;
+    }
+
     @UiThread
     public static DurationCache with(Context context) {
         return new DurationCache(context);
     }
 
     @Override
+    public DurationCache load(String url) {
+        return super.load(url);
+    }
+
+    @Override
+    public DurationCache placeholder(Long placeHolder) {
+        return super.placeholder(placeHolder);
+    }
+
+    @Override
+    public DurationCache error(Long error) {
+        return super.error(error);
+    }
+
+    @Override
     public void into(final View view) {
-        if (isFinish() || view == null) {
+        if (isFinishing() || view == null) {
             return;
         }
-        target = new WeakReference<>(view);
-        if (TextUtils.isEmpty(url)) {
+        if (TextUtils.isEmpty(mKey)) {
             // Just error
-            if (view instanceof DurationView) {
-                ((DurationView) view).setDuration(error != null ? error : placeHolder);
+            if (view instanceof IDuration) {
+                ((IDuration) view).setDuration(mError != null ? mError : mPlaceHolder);
             } else if (view instanceof TextView) {
-                ((TextView) view).setText(error != null ? error.toString()
-                        : placeHolder != null ? placeHolder.toString() : "");
+                long time = mError != null ? mError : mPlaceHolder != null ? mPlaceHolder : 0;
+                ((TextView) view).setText(Util.formatTime(time));
             }
             return;
         }
-        Object tag = view.getTag(R.id.lib_cache_tag_duration);
-        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
+        setTarget(view);
+        Object tag = view.getTag(getTag());
+        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, mKey)) {
             // Not refresh
             return;
         }
-        view.setTag(R.id.lib_cache_tag_duration, url);
-        DurationCacheManager.getInstance(getContext().getApplicationContext())
-                .load(getContext().getApplicationContext(), url, new CacheListener<Long>() {
+        view.setTag(getTag(), mKey);
+        DurationCacheManager.getIns(getContext()).load(getContext(), mKey,
+                new CacheListener<Long>() {
                     @Override
                     public void onLoading() {
-                        if (isFinish() || getTarget() == null) {
+                        if (isFinished()) {
                             return;
                         }
-                        Object tag = getTarget().getTag(R.id.lib_cache_tag_duration);
-                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                            if (placeHolder == null) {
-                                return;
-                            }
-                            if (getTarget() instanceof DurationView) {
-                                ((DurationView) getTarget()).setDuration(placeHolder);
-                            } else if (getTarget() instanceof TextView) {
-                                ((TextView) getTarget()).setText(Util.formatTime(placeHolder));
-                            }
+                        if (mPlaceHolder == null) {
+                            return;
                         }
+                        setTarget(mPlaceHolder);
                     }
 
                     @Override
                     public void onSuccess(Long result) {
-                        Object tag = view.getTag(R.id.lib_cache_tag_duration);
-                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                            if (view instanceof DurationView) {
-                                ((DurationView) view).setDuration(result);
-                            } else if (getTarget() instanceof TextView) {
-                                long time = result != null ? result : 0;
-                                ((TextView) getTarget()).setText(Util.formatTime(time));
-                            }
+                        if (isFinished()) {
+                            return;
                         }
+                        setTarget(result);
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        Object tag = view.getTag(R.id.lib_cache_tag_duration);
-                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                            if (error == null) {
-                                return;
-                            }
-                            if (view instanceof DurationView) {
-                                ((DurationView) view).setDuration(error);
-                            } else if (getTarget() instanceof TextView) {
-                                ((TextView) getTarget()).setText(Util.formatTime(error));
-                            }
+                        if (isFinished()) {
+                            return;
                         }
+                        if (mError == null) {
+                            return;
+                        }
+                        setTarget(mError);
+                    }
+
+                    private void setTarget(Long value) {
+                        if (getTarget() instanceof IDuration) {
+                            ((IDuration) getTarget()).setDuration(value);
+                        } else if (getTarget() instanceof TextView) {
+                            long time = value != null ? value : 0;
+                            ((TextView) getTarget()).setText(Util.formatTime(time));
+                        }
+                    }
+
+                    private boolean isFinished() {
+                        if (isFinishing() || getTarget() == null) {
+                            return true;
+                        }
+                        Object tag = getTarget().getTag(getTag());
+                        return tag == null || !(tag instanceof String) || !TextUtils.equals((String) tag, mKey);
                     }
                 });
     }
 
     @Override
     public void listener(CacheListener<Long> l) {
-        if (isFinish()) {
+        if (isFinishing()) {
             return;
         }
-        if (TextUtils.isEmpty(url)) {
+        if (TextUtils.isEmpty(mKey)) {
             // Just error
             if (l != null) {
                 l.onError(new CacheException("Url must not be empty!"));
             }
             return;
         }
-        DurationCacheManager.getInstance(getContext().getApplicationContext())
-                .load(getContext().getApplicationContext(), url, l);
+        DurationCacheManager.getIns(getContext()).load(getContext(), mKey, l);
     }
 
     @SuppressWarnings("unused")
@@ -127,7 +144,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         if (view == null) {
             return;
         }
-        view.setTag(R.id.lib_cache_tag_duration, "");
+        view.setTag(getTag(), "");
     }
 
     @SuppressWarnings("unused")
@@ -136,6 +153,6 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         if (context == null) {
             return;
         }
-        DurationCacheManager.getInstance(context.getApplicationContext()).release();
+        DurationCacheManager.getIns(context).release();
     }
 }

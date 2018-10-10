@@ -5,10 +5,10 @@ import android.content.Context;
 /**
  * Created by D on 2017/10/18.
  */
-class CacheManager {
-    volatile static ACache aCache;
+public class CacheManager {
+    protected volatile static ACache aCache;
 
-    CacheManager(Context context) {
+    protected CacheManager(Context context) {
         init(context.getApplicationContext());
     }
 

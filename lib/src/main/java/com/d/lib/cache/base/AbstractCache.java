@@ -10,43 +10,47 @@ import java.lang.ref.WeakReference;
 /**
  * Created by D on 2018/6/8.
  */
-public abstract class AbstractCache<R extends AbstractCache, Target, Url, Placeholder, Result> {
-    protected WeakReference<Context> context;
-    protected WeakReference<Target> target;
-    protected Url url;
-    protected Placeholder placeHolder;
-    protected Placeholder error;
+public abstract class AbstractCache<R extends AbstractCache, Target, Key, Placeholder, Result> {
+    protected WeakReference<Context> mContext;
+    protected WeakReference<Target> mTarget;
+    protected Key mKey;
+    protected Placeholder mPlaceHolder;
+    protected Placeholder mError;
 
     protected AbstractCache(Context context) {
-        this.context = new WeakReference<>(context instanceof Activity ? context : context.getApplicationContext());
+        this.mContext = new WeakReference<>(context instanceof Activity ? context : context.getApplicationContext());
     }
 
-    public R load(Url url) {
-        this.url = url;
+    public R load(Key key) {
+        this.mKey = key;
         return (R) this;
     }
 
     public R placeholder(Placeholder placeHolder) {
-        this.placeHolder = placeHolder;
+        this.mPlaceHolder = placeHolder;
         return (R) this;
     }
 
-    public R error(Placeholder placeHolder) {
-        this.placeHolder = placeHolder;
+    public R error(Placeholder error) {
+        this.mError = error;
         return (R) this;
     }
 
-    protected Context getContext() {
-        return context != null ? context.get() : null;
+    protected void setTarget(Target target) {
+        mTarget = new WeakReference<>(target);
     }
 
     protected Target getTarget() {
-        return target != null ? target.get() : null;
+        return mTarget != null ? mTarget.get() : null;
     }
 
-    protected boolean isFinish() {
-        return context == null || context.get() == null
-                || context.get() instanceof Activity && ((Activity) context.get()).isFinishing();
+    protected Context getContext() {
+        return mContext != null ? mContext.get() : null;
+    }
+
+    protected boolean isFinishing() {
+        return mContext == null || mContext.get() == null
+                || mContext.get() instanceof Activity && ((Activity) mContext.get()).isFinishing();
     }
 
     public abstract void into(final Target target);

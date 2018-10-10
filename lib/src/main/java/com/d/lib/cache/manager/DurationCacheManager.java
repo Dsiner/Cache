@@ -1,4 +1,4 @@
-package com.d.lib.cache.base;
+package com.d.lib.cache.manager;
 
 import android.content.Context;
 import android.media.MediaMetadataRetriever;
@@ -7,6 +7,8 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import com.d.lib.cache.base.AbstractCacheManager;
+import com.d.lib.cache.base.PreFix;
 import com.d.lib.cache.listener.CacheListener;
 
 import java.util.HashMap;
@@ -14,23 +16,28 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public class DurationCacheManager extends AbstractCacheManager<Long> {
-    private volatile static DurationCacheManager manager;
+public class DurationCacheManager extends AbstractCacheManager<String, Long> {
+    private volatile static DurationCacheManager instance;
 
-    public static DurationCacheManager getInstance(Context context) {
-        if (manager == null) {
+    public static DurationCacheManager getIns(Context context) {
+        if (instance == null) {
             synchronized (DurationCacheManager.class) {
-                if (manager == null) {
-                    manager = new DurationCacheManager(context);
+                if (instance == null) {
+                    instance = new DurationCacheManager(context);
                 }
             }
         }
-        return manager;
+        return instance;
     }
 
     private DurationCacheManager(Context context) {
         super(context);
-        lruCache.setCount(180);
+        mLruCache.setCount(180);
+    }
+
+    @Override
+    protected String getPreFix() {
+        return PreFix.DURATION;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
@@ -65,11 +72,11 @@ public class DurationCacheManager extends AbstractCacheManager<Long> {
 
     @Override
     protected Long getDisk(String url) {
-        return (Long) aCache.getAsObject(PreFix.DURATION + url);
+        return (Long) aCache.getAsObject(getPreFix() + url);
     }
 
     @Override
     protected void putDisk(String url, Long value) {
-        aCache.put(PreFix.DURATION + url, value);
+        aCache.put(getPreFix() + url, value);
     }
 }

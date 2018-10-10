@@ -12,13 +12,11 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.d.lib.cache.base.AbstractCache;
-import com.d.lib.cache.base.FrameCacheManager;
 import com.d.lib.cache.bean.FrameBean;
 import com.d.lib.cache.exception.CacheException;
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.listener.FrameView;
-
-import java.lang.ref.WeakReference;
+import com.d.lib.cache.listener.IFrame;
+import com.d.lib.cache.manager.FrameCacheManager;
 
 /**
  * Cache - Get video first frame & duration
@@ -31,109 +29,128 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
         super(context);
     }
 
+    private static int getTag() {
+        return R.id.lib_cache_tag_frame;
+    }
+
     @UiThread
     public static FrameCache with(Context context) {
         return new FrameCache(context);
     }
 
+    @Override
+    public FrameCache load(String url) {
+        return super.load(url);
+    }
+
     public FrameCache placeholder(@DrawableRes int resId) {
-        if (isFinish()) {
+        if (isFinishing()) {
             return this;
         }
         return placeholder(ContextCompat.getDrawable(getContext(), resId));
     }
 
+    @Override
+    public FrameCache placeholder(Drawable placeHolder) {
+        return super.placeholder(placeHolder);
+    }
+
     public FrameCache error(@DrawableRes int resId) {
-        if (isFinish()) {
+        if (isFinishing()) {
             return this;
         }
         return error(ContextCompat.getDrawable(getContext(), resId));
     }
 
     @Override
+    public FrameCache error(Drawable error) {
+        return super.error(error);
+    }
+
+    @Override
     public void into(View view) {
-        if (isFinish() || view == null) {
+        if (isFinishing() || view == null) {
             return;
         }
-        target = new WeakReference<>(view);
-        if (TextUtils.isEmpty(url)) {
+        if (TextUtils.isEmpty(mKey)) {
             // Just error
-            if (view instanceof FrameView) {
-                ((FrameView) view).setFrame(error != null ? error : placeHolder, 0L);
+            if (view instanceof IFrame) {
+                ((IFrame) view).setFrame(mError != null ? mError : mPlaceHolder, 0L);
             } else if (view instanceof ImageView) {
-                ((ImageView) view).setImageDrawable(error != null ? error : placeHolder);
+                ((ImageView) view).setImageDrawable(mError != null ? mError : mPlaceHolder);
             }
             return;
         }
-        Object tag = view.getTag(R.id.lib_cache_tag_frame);
-        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
+        setTarget(view);
+        Object tag = view.getTag(getTag());
+        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, mKey)) {
             // Not refresh
             return;
         }
-        view.setTag(R.id.lib_cache_tag_frame, url);
-        FrameCacheManager.getInstance(getContext().getApplicationContext())
-                .load(getContext().getApplicationContext(), url, new CacheListener<FrameBean>() {
+        view.setTag(getTag(), mKey);
+        FrameCacheManager.getIns(getContext().getApplicationContext())
+                .load(getContext().getApplicationContext(), mKey, new CacheListener<FrameBean>() {
                     @Override
                     public void onLoading() {
-                        if (isFinish() || getTarget() == null) {
+                        if (isFinished()) {
                             return;
                         }
-                        Object tag = getTarget().getTag(R.id.lib_cache_tag_frame);
-                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                            if (getTarget() instanceof FrameView) {
-                                ((FrameView) getTarget()).setFrame(placeHolder, 0L);
-                            } else if (getTarget() instanceof ImageView) {
-                                ((ImageView) getTarget()).setImageDrawable(placeHolder);
-                            }
+                        if (mPlaceHolder == null) {
+                            return;
                         }
+                        setTarget(mPlaceHolder, 0L);
                     }
 
                     @Override
                     public void onSuccess(FrameBean result) {
-                        if (isFinish() || getTarget() == null) {
+                        if (isFinished()) {
                             return;
                         }
-                        Object tag = getTarget().getTag(R.id.lib_cache_tag_frame);
-                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                            if (getTarget() instanceof FrameView) {
-                                ((FrameView) getTarget()).setFrame(result.drawable, result.duration);
-                            } else if (getTarget() instanceof ImageView) {
-                                ((ImageView) getTarget()).setImageDrawable(result.drawable);
-                            }
-                        }
+                        setTarget(result.drawable, result.duration);
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        if (isFinish() || getTarget() == null) {
+                        if (isFinished()) {
                             return;
                         }
-                        Object tag = getTarget().getTag(R.id.lib_cache_tag_frame);
-                        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, url)) {
-                            if (getTarget() instanceof FrameView) {
-                                ((FrameView) getTarget()).setFrame(error != null ? error : placeHolder, 0L);
-                            } else if (getTarget() instanceof ImageView) {
-                                ((ImageView) getTarget()).setImageDrawable(error != null ? error : placeHolder);
-                            }
+                        if (mError == null) {
+                            return;
                         }
+                        setTarget(mError, 0L);
+                    }
+
+                    private void setTarget(Drawable drawable, Long duration) {
+                        if (getTarget() instanceof IFrame) {
+                            ((IFrame) getTarget()).setFrame(drawable, duration);
+                        } else if (getTarget() instanceof ImageView) {
+                            ((ImageView) getTarget()).setImageDrawable(drawable);
+                        }
+                    }
+
+                    private boolean isFinished() {
+                        if (isFinishing() || getTarget() == null) {
+                            return true;
+                        }
+                        Object tag = getTarget().getTag(getTag());
+                        return tag == null || !(tag instanceof String) || !TextUtils.equals((String) tag, mKey);
                     }
                 });
     }
 
     @Override
     public void listener(CacheListener<FrameBean> l) {
-        if (isFinish()) {
+        if (isFinishing()) {
             return;
         }
-        if (TextUtils.isEmpty(url)) {
+        if (TextUtils.isEmpty(mKey)) {
             // Just error
             if (l != null) {
                 l.onError(new CacheException("Url must not be empty!"));
             }
             return;
         }
-        FrameCacheManager.getInstance(getContext().getApplicationContext())
-                .load(getContext().getApplicationContext(), url, l);
+        FrameCacheManager.getIns(getContext()).load(getContext(), mKey, l);
     }
 
     @SuppressWarnings("unused")
@@ -142,7 +159,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
         if (view == null) {
             return;
         }
-        view.setTag(R.id.lib_cache_tag_frame, "");
+        view.setTag(getTag(), "");
     }
 
     @SuppressWarnings("unused")
@@ -151,6 +168,6 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, Drawable
         if (context == null) {
             return;
         }
-        FrameCacheManager.getInstance(context.getApplicationContext()).release();
+        FrameCacheManager.getIns(context.getApplicationContext()).release();
     }
 }

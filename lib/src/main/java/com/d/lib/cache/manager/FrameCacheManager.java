@@ -1,4 +1,4 @@
-package com.d.lib.cache.base;
+package com.d.lib.cache.manager;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -6,9 +6,12 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import com.d.lib.cache.base.AbstractCacheManager;
+import com.d.lib.cache.base.PreFix;
 import com.d.lib.cache.bean.FrameBean;
 import com.d.lib.cache.listener.CacheListener;
 import com.d.lib.cache.utils.Util;
@@ -18,23 +21,34 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public class FrameCacheManager extends AbstractCacheManager<FrameBean> {
-    private volatile static FrameCacheManager manager;
+public class FrameCacheManager extends AbstractCacheManager<String, FrameBean> {
+    private volatile static FrameCacheManager instance;
 
-    public static FrameCacheManager getInstance(Context context) {
-        if (manager == null) {
+    public static FrameCacheManager getIns(Context context) {
+        if (instance == null) {
             synchronized (FrameCacheManager.class) {
-                if (manager == null) {
-                    manager = new FrameCacheManager(context);
+                if (instance == null) {
+                    instance = new FrameCacheManager(context);
                 }
             }
         }
-        return manager;
+        return instance;
     }
 
     private FrameCacheManager(Context context) {
         super(context);
-        lruCache.setCount(12);
+        mLruCache.setCount(12);
+    }
+
+    @NonNull
+    @Override
+    protected String getPreFix() {
+        return PreFix.FRAME;
+    }
+
+    @NonNull
+    protected String getPreFixDuration() {
+        return PreFix.DURATION;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
@@ -75,8 +89,8 @@ public class FrameCacheManager extends AbstractCacheManager<FrameBean> {
 
     @Override
     protected FrameBean getDisk(String url) {
-        Drawable drawable = aCache.getAsDrawable(PreFix.FRAME + url);
-        Long duration = (Long) aCache.getAsObject(PreFix.DURATION + url);
+        Drawable drawable = aCache.getAsDrawable(getPreFix() + url);
+        Long duration = (Long) aCache.getAsObject(getPreFixDuration() + url);
         if (drawable == null || duration == null) {
             return null;
         }
@@ -88,7 +102,7 @@ public class FrameCacheManager extends AbstractCacheManager<FrameBean> {
 
     @Override
     protected void putDisk(String url, FrameBean value) {
-        aCache.put(PreFix.FRAME + url, value.drawable);
-        aCache.put(PreFix.DURATION + url, value.duration);
+        aCache.put(getPreFix() + url, value.drawable);
+        aCache.put(getPreFixDuration() + url, value.duration);
     }
 }
