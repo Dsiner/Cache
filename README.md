@@ -14,11 +14,13 @@
 ## Implementation list
 - [x] `FrameCache` - Get the first frame and duration of local or network video.
 - [x] `DurationCache` - Get local or network audio duration.
+- [x] `ImageCache` - Get local or network image.
 
 ## Usage
 ```java
         FrameCache.with(context).load(url).placeholder(R.color.colorAccent).into(view);
         DurationCache.with(context).load(url).placeholder(0L).into(view);
+        ImageCache.with(context).load(url).into(ivImage);
         ...
 ```
 

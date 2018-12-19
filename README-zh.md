@@ -13,11 +13,13 @@
 ## Implementation list
 - [x] `FrameCache` - 获取本地或网络视频第一帧和时长
 - [x] `DurationCache` - 获取本地或网络音频时长
+- [x] `ImageCache` - 获取本地或网络图片
 
 ## Usage
 ```java
         FrameCache.with(context).load(url).placeholder(R.color.colorAccent).into(view);
         DurationCache.with(context).load(url).placeholder(0L).into(view);
+        ImageCache.with(context).load(url).into(ivImage);
         ...
 ```
 
