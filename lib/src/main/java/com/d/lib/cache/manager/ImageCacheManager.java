@@ -49,13 +49,14 @@ public class ImageCacheManager extends AbstractCacheManager<String, Bitmap> {
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
     protected void absLoad(Context context, final String url, final CacheListener<Bitmap> listener) {
-        DataFetcher<InputStream> dataFetcher = new HttpStreamFetcher(url);
+        final DataFetcher<InputStream> dataFetcher = new HttpStreamFetcher(url);
         dataFetcher.loadData(Priority.HIGH, new DataFetcher.DataCallback<InputStream>() {
             @Override
             public void onDataReady(@Nullable InputStream data) {
                 // Save to disk
                 try {
                     Bitmap bitmap = BitmapHunter.decodeStream(data, new Request());
+                    dataFetcher.cleanup();
                     putDisk(url, bitmap);
                     success(url, bitmap, listener);
                 } catch (Exception e) {
@@ -66,6 +67,7 @@ public class ImageCacheManager extends AbstractCacheManager<String, Bitmap> {
 
             @Override
             public void onLoadFailed(@NonNull Exception e) {
+                dataFetcher.cleanup();
                 error(url, e, listener);
             }
         });
