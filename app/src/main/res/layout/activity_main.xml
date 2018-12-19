@@ -78,4 +78,17 @@
         android:layout_height="45dp"
         android:gravity="center"
         android:text="Get Duration" />
+
+    <ImageView
+        android:id="@+id/iv_image"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btn_image"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:gravity="center"
+        android:text="Get Image" />
 </LinearLayout>

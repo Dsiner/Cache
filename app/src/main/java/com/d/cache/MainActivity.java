@@ -10,6 +10,7 @@ import com.d.cache.view.VideoPreView;
 import com.d.cache.view.VoiceView;
 import com.d.lib.cache.DurationCache;
 import com.d.lib.cache.FrameCache;
+import com.d.lib.cache.ImageCache;
 
 public class MainActivity extends AppCompatActivity {
     private final String videoUrl = "http://vpls.cdn.videojj.com/scene/video02_720p.mp4";
@@ -19,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView ivPreview;
     private VoiceView vvDuraion;
     private TextView tvDuraion;
+    private ImageView ivImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
         ivPreview = (ImageView) findViewById(R.id.iv_preview);
         vvDuraion = (VoiceView) findViewById(R.id.vv_duration);
         tvDuraion = (TextView) findViewById(R.id.tv_duration);
+        ivImage = (ImageView) findViewById(R.id.iv_image);
     }
 
     private void initTest() {
@@ -49,6 +52,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 DurationCache.with(getApplicationContext()).load(voiceUrl).placeholder(0L).into(vvDuraion);
                 DurationCache.with(getApplicationContext()).load(voiceUrl).placeholder(0L).into(tvDuraion);
+            }
+        });
+
+        findViewById(R.id.btn_image).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String url = "https://www.baidu.com/img/bd_logo1.png";
+                String url1 = "http://img2.imgtn.bdimg.com/it/u=764856423,3994964277&fm=26&gp=0.jpg";
+                ImageCache.with(getApplicationContext()).load(url).into(ivImage);
             }
         });
     }

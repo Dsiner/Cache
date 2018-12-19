@@ -2,4 +2,5 @@
 <resources>
     <item name="lib_cache_tag_duration" type="id" />
     <item name="lib_cache_tag_frame" type="id" />
+    <item name="lib_cache_tag_image" type="id" />
 </resources>
