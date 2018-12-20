@@ -6,6 +6,7 @@ package com.d.lib.cache.base;
  */
 public class PreFix {
     public static String IMAGE = "image_";
+    public static String COMPRESS = "compress_";
     public static String FRAME = "frame_";
     public static String DURATION = "duration_";
 }

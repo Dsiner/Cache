@@ -9,11 +9,11 @@ import android.support.annotation.RequiresApi;
 
 import com.d.lib.cache.base.AbstractCacheManager;
 import com.d.lib.cache.base.PreFix;
-import com.d.lib.cache.fetcher.BitmapHunter;
-import com.d.lib.cache.fetcher.DataFetcher;
-import com.d.lib.cache.fetcher.HttpStreamFetcher;
-import com.d.lib.cache.fetcher.Priority;
-import com.d.lib.cache.fetcher.Request;
+import com.d.lib.cache.component.fetcher.BitmapHunter;
+import com.d.lib.cache.component.fetcher.DataFetcher;
+import com.d.lib.cache.component.fetcher.HttpStreamFetcher;
+import com.d.lib.cache.component.fetcher.Priority;
+import com.d.lib.cache.component.fetcher.Request;
 import com.d.lib.cache.listener.CacheListener;
 
 import java.io.InputStream;

@@ -1,4 +1,4 @@
-package com.d.lib.cache.fetcher;
+package com.d.lib.cache.component.fetcher;
 
 import android.support.annotation.NonNull;
 import android.util.Log;

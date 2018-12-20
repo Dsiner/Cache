@@ -1,9 +1,9 @@
-package com.d.lib.cache.fetcher;
+package com.d.lib.cache.component.fetcher;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.d.lib.cache.decoder.ResourceDecoder;
+import com.d.lib.cache.component.decoder.ResourceDecoder;
 
 public interface DataFetcher<T> {
 

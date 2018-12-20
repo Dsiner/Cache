@@ -1,4 +1,4 @@
-package com.d.lib.cache.fetcher;
+package com.d.lib.cache.component.fetcher;
 
 /*
  * Copyright (C) 2013 Square, Inc.

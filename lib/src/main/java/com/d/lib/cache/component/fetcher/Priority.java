@@ -1,4 +1,4 @@
-package com.d.lib.cache.fetcher;
+package com.d.lib.cache.component.fetcher;
 
 /**
  * Priorities for completing loads. If more than one load is queued at a time, the load with the
