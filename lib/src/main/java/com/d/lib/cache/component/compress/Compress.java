@@ -62,10 +62,9 @@ public class Compress {
             mTargetDir = getImageCacheDir(context).getAbsolutePath();
         }
 
-        String cacheBuilder = mTargetDir + "/" +
-                System.currentTimeMillis() +
-                (int) (Math.random() * 1000) +
-                (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
+        String cacheBuilder = mTargetDir + "/"
+                + mRequestOptions.provider.getPath().hashCode()
+                + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
 
         return new File(cacheBuilder);
     }

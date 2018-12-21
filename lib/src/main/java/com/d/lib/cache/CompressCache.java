@@ -14,7 +14,8 @@ import com.d.lib.cache.base.AbstractCache;
 import com.d.lib.cache.component.compress.RequestOptions;
 import com.d.lib.cache.exception.CacheException;
 import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.manager.CompressCacheManager;
+import com.d.lib.cache.manager.CompressBitmapCacheManager;
+import com.d.lib.cache.manager.CompressFileCacheManager;
 
 import java.io.File;
 import java.io.InputStream;
@@ -42,7 +43,7 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Bi
     @Override
     public CompressCache load(String string) {
         requestOptions.load(string);
-        return super.load(string);
+        return super.load(requestOptions.provider.getPath());
     }
 
     public CompressCache load(@Nullable InputStream inputStream) {
@@ -52,12 +53,12 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Bi
 
     public CompressCache load(@Nullable final Uri uri) {
         requestOptions.load(getContext(), uri);
-        return this;
+        return super.load(requestOptions.provider.getPath());
     }
 
     public CompressCache load(@Nullable File file) {
         requestOptions.load(file);
-        return this;
+        return super.load(requestOptions.provider.getPath());
     }
 
     @Override
@@ -96,7 +97,7 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Bi
             return;
         }
         view.setTag(getTag(), mKey);
-        CompressCacheManager.getIns(getContext().getApplicationContext())
+        CompressBitmapCacheManager.getIns(getContext().getApplicationContext())
                 .setRequestOptions(requestOptions)
                 .load(getContext().getApplicationContext(), requestOptions.provider,
                         new CacheListener<Bitmap>() {
@@ -158,7 +159,25 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Bi
             }
             return;
         }
-        CompressCacheManager.getIns(getContext()).load(getContext(), requestOptions.provider, l);
+        CompressBitmapCacheManager.getIns(getContext())
+                .setRequestOptions(requestOptions)
+                .load(getContext(), requestOptions.provider, l);
+    }
+
+    public void file(CacheListener<File> l) {
+        if (isFinishing()) {
+            return;
+        }
+        if (TextUtils.isEmpty(mKey)) {
+            // Just error
+            if (l != null) {
+                l.onError(new CacheException("Url must not be empty!"));
+            }
+            return;
+        }
+        CompressFileCacheManager.getIns(getContext())
+                .setRequestOptions(requestOptions)
+                .load(getContext(), requestOptions.provider, l);
     }
 
     @SuppressWarnings("unused")
@@ -176,6 +195,6 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Bi
         if (context == null) {
             return;
         }
-        CompressCacheManager.getIns(context.getApplicationContext()).release();
+        CompressFileCacheManager.getIns(context.getApplicationContext()).release();
     }
 }

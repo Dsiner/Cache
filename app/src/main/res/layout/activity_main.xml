@@ -5,90 +5,115 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="5dp">
+        android:layout_height="match_parent">
 
-        <com.d.cache.view.VideoPreView
-            android:id="@+id/vpv_preview"
-            android:layout_width="0dp"
-            android:layout_height="95dp"
-            android:layout_weight="1" />
-
-        <View
-            android:layout_width="12dp"
-            android:layout_height="1px" />
-
-        <ImageView
-            android:id="@+id/iv_preview"
-            android:layout_width="0dp"
-            android:layout_height="95dp"
-            android:layout_weight="1"
-            android:scaleType="centerCrop" />
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btn_frame"
-        android:layout_width="match_parent"
-        android:layout_height="45dp"
-        android:gravity="center"
-        android:text="Get First Frame and Duration" />
-
-    <com.d.cache.view.VoiceView
-        android:id="@+id/vv_duration"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:gravity="center_vertical"
-        android:padding="6dp"
-        android:text="Duration："
-        android:textColor="#000000"
-        android:textSize="12dp" />
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:orientation="horizontal"
-        android:padding="6dp">
-
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:text="Duration："
-            android:textColor="#000000"
-            android:textSize="12dp" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_duration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:textColor="#000000"
-            android:textSize="12dp" />
-    </LinearLayout>
 
-    <Button
-        android:id="@+id/btn_duration"
-        android:layout_width="match_parent"
-        android:layout_height="45dp"
-        android:gravity="center"
-        android:text="Get Duration" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="5dp">
 
-    <ImageView
-        android:id="@+id/iv_image"
-        android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:layout_marginTop="12dp" />
+                <com.d.cache.view.VideoPreView
+                    android:id="@+id/vpv_preview"
+                    android:layout_width="0dp"
+                    android:layout_height="95dp"
+                    android:layout_weight="1" />
 
-    <Button
-        android:id="@+id/btn_image"
-        android:layout_width="match_parent"
-        android:layout_height="45dp"
-        android:gravity="center"
-        android:text="Get Image" />
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="1px" />
+
+                <ImageView
+                    android:id="@+id/iv_preview"
+                    android:layout_width="0dp"
+                    android:layout_height="95dp"
+                    android:layout_weight="1"
+                    android:scaleType="centerCrop" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_frame"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:gravity="center"
+                android:text="Get First Frame and Duration" />
+
+            <com.d.cache.view.VoiceView
+                android:id="@+id/vv_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:padding="6dp"
+                android:text="Duration："
+                android:textColor="#000000"
+                android:textSize="12dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:padding="6dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:text="Duration："
+                    android:textColor="#000000"
+                    android:textSize="12dp" />
+
+                <TextView
+                    android:id="@+id/tv_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:textColor="#000000"
+                    android:textSize="12dp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_duration"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:gravity="center"
+                android:text="Get Duration" />
+
+            <ImageView
+                android:id="@+id/iv_image"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:layout_marginTop="12dp" />
+
+            <Button
+                android:id="@+id/btn_image"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:gravity="center"
+                android:text="Get Image" />
+
+            <ImageView
+                android:id="@+id/iv_compress"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:layout_marginTop="12dp" />
+
+            <Button
+                android:id="@+id/btn_compress"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:gravity="center"
+                android:text="Get Image" />
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

@@ -1,30 +1,41 @@
 package com.d.cache;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.d.cache.compress.CompressHelper;
 import com.d.cache.view.VideoPreView;
 import com.d.cache.view.VoiceView;
+import com.d.lib.cache.CompressCache;
 import com.d.lib.cache.DurationCache;
 import com.d.lib.cache.FrameCache;
 import com.d.lib.cache.ImageCache;
+import com.d.lib.cache.component.compress.RequestOptions;
+import com.d.lib.cache.listener.CacheListener;
+
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
     private final String videoUrl = "http://vpls.cdn.videojj.com/scene/video02_720p.mp4";
     private final String voiceUrl = "http://exploiter.oss-cn-beijing.aliyuncs.com/audio/298/5Y2W54Gr5p%2B055qE5bCP5aWz5a2p_chinesestory_1484589316_1.mp3";
 
+    private Context mContext;
     private VideoPreView vpvPreview;
     private ImageView ivPreview;
     private VoiceView vvDuraion;
     private TextView tvDuraion;
     private ImageView ivImage;
+    private ImageView ivCompress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
         setContentView(R.layout.activity_main);
         initView();
         initTest();
@@ -36,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         vvDuraion = (VoiceView) findViewById(R.id.vv_duration);
         tvDuraion = (TextView) findViewById(R.id.tv_duration);
         ivImage = (ImageView) findViewById(R.id.iv_image);
+        ivCompress = (ImageView) findViewById(R.id.iv_compress);
     }
 
     private void initTest() {
@@ -61,6 +73,36 @@ public class MainActivity extends AppCompatActivity {
                 String url = "https://www.baidu.com/img/bd_logo1.png";
                 String url1 = "http://img2.imgtn.bdimg.com/it/u=764856423,3994964277&fm=26&gp=0.jpg";
                 ImageCache.with(getApplicationContext()).load(url).into(ivImage);
+            }
+        });
+
+        findViewById(R.id.btn_compress).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                CompressCache.with(getApplicationContext())
+//                        .load(CompressHelper.getPath(mContext))
+//                        .apply(new RequestOptions().setFocusAlpha(false).ignoreBy(200))
+//                        .into(ivCompress);
+
+                CompressCache.with(getApplicationContext())
+                        .load(CompressHelper.getPath(mContext))
+                        .apply(new RequestOptions().setFocusAlpha(false).ignoreBy(200))
+                        .file(new CacheListener<File>() {
+                            @Override
+                            public void onLoading() {
+
+                            }
+
+                            @Override
+                            public void onSuccess(File result) {
+                                Log.d("Cache", "CompressCache onSuccess--> " + result.getAbsolutePath());
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                Log.d("Cache", "CompressCache onError--> " + e.toString());
+                            }
+                        });
             }
         });
     }

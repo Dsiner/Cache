@@ -19,28 +19,28 @@ import java.io.File;
 /**
  * Created by D on 2017/10/18.
  */
-public class CompressCacheManager extends AbstractCacheManager<InputStreamProvider, Bitmap> {
-    private volatile static CompressCacheManager instance;
+public class CompressBitmapCacheManager extends AbstractCacheManager<InputStreamProvider, Bitmap> {
+    private volatile static CompressBitmapCacheManager instance;
 
     private RequestOptions mRequestOptions;
 
-    public static CompressCacheManager getIns(Context context) {
+    public static CompressBitmapCacheManager getIns(Context context) {
         if (instance == null) {
-            synchronized (CompressCacheManager.class) {
+            synchronized (CompressBitmapCacheManager.class) {
                 if (instance == null) {
-                    instance = new CompressCacheManager(context);
+                    instance = new CompressBitmapCacheManager(context);
                 }
             }
         }
         return instance;
     }
 
-    private CompressCacheManager(Context context) {
+    private CompressBitmapCacheManager(Context context) {
         super(context);
         mLruCache.setCount(12);
     }
 
-    public CompressCacheManager setRequestOptions(RequestOptions requestOptions) {
+    public CompressBitmapCacheManager setRequestOptions(RequestOptions requestOptions) {
         this.mRequestOptions = requestOptions;
         return this;
     }
