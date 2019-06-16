@@ -3,13 +3,15 @@ package com.d.lib.cache.component.compress;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
+import com.d.lib.cache.utils.Util;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-public enum Checker {
+enum Checker {
     SINGLE;
 
     private static final String TAG = "Compress";
@@ -21,10 +23,30 @@ public enum Checker {
     /**
      * Determine if it is JPG.
      *
-     * @param is Image file input stream
+     * @param is image file input stream
      */
     boolean isJPG(InputStream is) {
-        return isJPG(toByteArray(is));
+        if (is == null) {
+            return false;
+        }
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        int read;
+        byte[] data = new byte[3];
+
+        try {
+            if ((read = is.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, read);
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        } finally {
+            Util.closeQuietly(buffer);
+        }
+        return isJPG(data);
     }
 
     /**
@@ -139,17 +161,21 @@ public enum Checker {
     }
 
     String extSuffix(InputStreamProvider provider) {
+        InputStream input = null;
         try {
+            input = provider.open();
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(provider.open(), null, options);
+            BitmapFactory.decodeStream(input, null, options);
             return options.outMimeType.replace("image/", ".");
         } catch (Exception e) {
             return JPG;
+        } finally {
+            Util.closeQuietly(input);
         }
     }
 
-    public boolean needCompress(int leastCompressSize, String path) {
+    boolean needCompress(int leastCompressSize, String path) {
         if (leastCompressSize > 0) {
             File source = new File(path);
             return source.exists() && source.length() > (leastCompressSize << 10);

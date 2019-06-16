@@ -9,10 +9,11 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.d.lib.cache.base.AbstractCache;
-import com.d.lib.cache.exception.CacheException;
-import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.listener.IDuration;
-import com.d.lib.cache.manager.DurationCacheManager;
+import com.d.lib.cache.base.CacheException;
+import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.RequestOptions;
+import com.d.lib.cache.component.duration.DurationCacheManager;
+import com.d.lib.cache.component.duration.IDuration;
 import com.d.lib.cache.utils.Util;
 
 /**
@@ -20,7 +21,7 @@ import com.d.lib.cache.utils.Util;
  * Created by D on 2017/10/19.
  */
 @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
-public class DurationCache extends AbstractCache<DurationCache, View, String, Long, Long> {
+public class DurationCache extends AbstractCache<DurationCache, View, String, RequestOptions<Long>> {
 
     private DurationCache(Context context) {
         super(context);
@@ -40,102 +41,112 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         return super.load(url);
     }
 
-    @Override
-    public DurationCache placeholder(Long placeHolder) {
-        return super.placeholder(placeHolder);
+    public Observe apply(RequestOptions<Long> options) {
+        this.mRequestOptions = options;
+        return new Observe();
     }
 
-    @Override
-    public DurationCache error(Long error) {
-        return super.error(error);
-    }
-
-    @Override
-    public void into(final View view) {
-        if (isFinishing() || view == null) {
-            return;
+    public class Observe extends AbsObserve<Observe, View, Long> {
+        Observe() {
         }
-        if (TextUtils.isEmpty(mKey)) {
-            // Just error
-            if (view instanceof IDuration) {
-                ((IDuration) view).setDuration(mError != null ? mError : mPlaceHolder);
-            } else if (view instanceof TextView) {
-                long time = mError != null ? mError : mPlaceHolder != null ? mPlaceHolder : 0;
-                ((TextView) view).setText(Util.formatTime(time));
+
+        @Override
+        public void into(final View view) {
+            if (isFinishing() || view == null) {
+                return;
             }
-            return;
-        }
-        setTarget(view);
-        Object tag = view.getTag(getTag());
-        if (tag != null && tag instanceof String && TextUtils.equals((String) tag, mKey)) {
-            // Not refresh
-            return;
-        }
-        view.setTag(getTag(), mKey);
-        DurationCacheManager.getIns(getContext()).load(getContext(), mKey,
-                new CacheListener<Long>() {
-                    @Override
-                    public void onLoading() {
-                        if (isFinished()) {
-                            return;
-                        }
-                        if (mPlaceHolder == null) {
-                            return;
-                        }
-                        setTarget(mPlaceHolder);
-                    }
-
-                    @Override
-                    public void onSuccess(Long result) {
-                        if (isFinished()) {
-                            return;
-                        }
-                        setTarget(result);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        if (isFinished()) {
-                            return;
-                        }
-                        if (mError == null) {
-                            return;
-                        }
-                        setTarget(mError);
-                    }
-
-                    private void setTarget(Long value) {
-                        if (getTarget() instanceof IDuration) {
-                            ((IDuration) getTarget()).setDuration(value);
-                        } else if (getTarget() instanceof TextView) {
-                            long time = value != null ? value : 0;
-                            ((TextView) getTarget()).setText(Util.formatTime(time));
-                        }
-                    }
-
-                    private boolean isFinished() {
-                        if (isFinishing() || getTarget() == null) {
-                            return true;
-                        }
-                        Object tag = getTarget().getTag(getTag());
-                        return tag == null || !(tag instanceof String) || !TextUtils.equals((String) tag, mKey);
-                    }
-                });
-    }
-
-    @Override
-    public void listener(CacheListener<Long> l) {
-        if (isFinishing()) {
-            return;
-        }
-        if (TextUtils.isEmpty(mKey)) {
-            // Just error
-            if (l != null) {
-                l.onError(new CacheException("Url must not be empty!"));
+            if (TextUtils.isEmpty(mKey)) {
+                // Just error
+                if (view instanceof IDuration) {
+                    ((IDuration) view).setDuration(mRequestOptions.mError != null
+                            ? mRequestOptions.mError : mRequestOptions.mPlaceHolder);
+                } else if (view instanceof TextView) {
+                    long time = mRequestOptions.mError != null
+                            ? mRequestOptions.mError
+                            : mRequestOptions.mPlaceHolder != null ? mRequestOptions.mPlaceHolder : 0;
+                    ((TextView) view).setText(Util.formatTime(time));
+                }
+                return;
             }
-            return;
+            setTarget(view);
+            Object tag = view.getTag(getTag());
+            if (tag != null && tag instanceof String
+                    && TextUtils.equals((String) tag, mKey)) {
+                // Not refresh
+                return;
+            }
+            view.setTag(getTag(), mKey);
+            new DurationCacheManager(getContext())
+                    .subscribeOn(mScheduler)
+                    .observeOn(mObserveOnScheduler)
+                    .load(getContext(), mKey, new CacheListener<Long>() {
+                        @Override
+                        public void onLoading() {
+                            if (isFinished()) {
+                                return;
+                            }
+                            if (mRequestOptions.mPlaceHolder == null) {
+                                return;
+                            }
+                            setTarget(mRequestOptions.mPlaceHolder);
+                        }
+
+                        @Override
+                        public void onSuccess(Long result) {
+                            if (isFinished()) {
+                                return;
+                            }
+                            setTarget(result);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            if (isFinished()) {
+                                return;
+                            }
+                            if (mRequestOptions.mError == null) {
+                                return;
+                            }
+                            setTarget(mRequestOptions.mError);
+                        }
+
+                        private void setTarget(Long value) {
+                            if (getTarget() instanceof IDuration) {
+                                ((IDuration) getTarget()).setDuration(value);
+                            } else if (getTarget() instanceof TextView) {
+                                long time = value != null ? value : 0;
+                                ((TextView) getTarget()).setText(Util.formatTime(time));
+                            }
+                        }
+
+                        private boolean isFinished() {
+                            if (isFinishing() || getTarget() == null) {
+                                return true;
+                            }
+                            Object tag = getTarget().getTag(getTag());
+                            return tag == null || !(tag instanceof String)
+                                    || !TextUtils.equals((String) tag, mKey);
+                        }
+                    });
         }
-        DurationCacheManager.getIns(getContext()).load(getContext(), mKey, l);
+
+        @Override
+        public void listener(CacheListener<Long> l) {
+            if (isFinishing()) {
+                return;
+            }
+            if (TextUtils.isEmpty(mKey)) {
+                // Just error
+                if (l != null) {
+                    l.onError(new CacheException("Url must not be empty!"));
+                }
+                return;
+            }
+            new DurationCacheManager(getContext())
+                    .subscribeOn(mScheduler)
+                    .observeOn(mObserveOnScheduler)
+                    .load(getContext(), mKey, l);
+        }
     }
 
     @SuppressWarnings("unused")
@@ -153,6 +164,6 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Lo
         if (context == null) {
             return;
         }
-        DurationCacheManager.getIns(context).release();
+        DurationCacheManager.release();
     }
 }

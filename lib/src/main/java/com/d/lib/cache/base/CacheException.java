@@ -1,4 +1,4 @@
-package com.d.lib.cache.exception;
+package com.d.lib.cache.base;
 
 /**
  * Created by D on 2017/10/19.

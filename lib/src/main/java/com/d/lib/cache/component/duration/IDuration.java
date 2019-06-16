@@ -1,4 +1,4 @@
-package com.d.lib.cache.listener;
+package com.d.lib.cache.component.duration;
 
 /**
  * Classes that implement DurationView must extends View

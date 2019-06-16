@@ -1,4 +1,4 @@
-package com.d.lib.cache.bean;
+package com.d.lib.cache.component.frame;
 
 import android.graphics.drawable.Drawable;
 

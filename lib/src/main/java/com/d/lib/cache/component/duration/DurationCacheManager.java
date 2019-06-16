@@ -1,4 +1,4 @@
-package com.d.lib.cache.manager;
+package com.d.lib.cache.component.duration;
 
 import android.content.Context;
 import android.media.MediaMetadataRetriever;
@@ -8,31 +8,67 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.d.lib.cache.base.AbstractCacheManager;
+import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.PreFix;
-import com.d.lib.cache.listener.CacheListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
  * Created by D on 2017/10/18.
  */
-public class DurationCacheManager extends AbstractCacheManager<String, Long> {
-    private volatile static DurationCacheManager instance;
+public class DurationCacheManager extends AbstractCacheManager<DurationCacheManager,
+        String, Long> {
 
-    public static DurationCacheManager getIns(Context context) {
-        if (instance == null) {
-            synchronized (DurationCacheManager.class) {
-                if (instance == null) {
-                    instance = new DurationCacheManager(context);
+    private static class Singleton {
+        private volatile static LruCache<String, Long> LRUCACHE = new LruCache<>(180);
+        private volatile static HashMap<String, ArrayList<CacheListener<Long>>> HASHMAP = new HashMap<>();
+
+        private static LruCache<String, Long> getLruCache() {
+            if (LRUCACHE == null) {
+                synchronized (Singleton.class) {
+                    if (LRUCACHE == null) {
+                        LRUCACHE = new LruCache<>(180);
+                    }
                 }
             }
+            return LRUCACHE;
         }
-        return instance;
+
+        private static HashMap<String, ArrayList<CacheListener<Long>>> getHashMap() {
+            if (HASHMAP == null) {
+                synchronized (Singleton.class) {
+                    if (HASHMAP == null) {
+                        HASHMAP = new HashMap<>();
+                    }
+                }
+            }
+            return HASHMAP;
+        }
+
+        private static void release() {
+            LRUCACHE = null;
+            HASHMAP = null;
+        }
     }
 
-    private DurationCacheManager(Context context) {
+    public DurationCacheManager(Context context) {
         super(context);
-        mLruCache.setCount(180);
+    }
+
+    @Override
+    public LruCache<String, Long> getLruCache() {
+        return Singleton.getLruCache();
+    }
+
+    @Override
+    public HashMap<String, ArrayList<CacheListener<Long>>> getHashMap() {
+        return Singleton.getHashMap();
+    }
+
+    public static void release() {
+        Singleton.release();
     }
 
     @Override

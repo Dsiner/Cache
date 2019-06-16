@@ -10,7 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.d.cache.R;
-import com.d.lib.cache.listener.IFrame;
+import com.d.lib.cache.component.frame.IFrame;
 import com.d.lib.cache.utils.Util;
 
 /**

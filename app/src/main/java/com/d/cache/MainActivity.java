@@ -1,7 +1,10 @@
 package com.d.cache;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -15,8 +18,9 @@ import com.d.lib.cache.CompressCache;
 import com.d.lib.cache.DurationCache;
 import com.d.lib.cache.FrameCache;
 import com.d.lib.cache.ImageCache;
-import com.d.lib.cache.component.compress.RequestOptions;
-import com.d.lib.cache.listener.CacheListener;
+import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.RequestOptions;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
 import java.io.File;
 
@@ -54,16 +58,35 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_frame).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FrameCache.with(getApplicationContext()).load(videoUrl).placeholder(R.color.colorAccent).into(vpvPreview);
-                FrameCache.with(getApplicationContext()).load(videoUrl).placeholder(R.color.colorAccent).into(ivPreview);
+                FrameCache.with(getApplicationContext())
+                        .load(videoUrl)
+                        .apply(new RequestOptions<Drawable>()
+                                .placeholder(ContextCompat.getDrawable(mContext, R.color.colorAccent)))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.mainThread())
+                        .into(vpvPreview);
+                FrameCache.with(getApplicationContext())
+                        .load(videoUrl)
+                        .apply(new RequestOptions<Drawable>()
+                                .placeholder(ContextCompat.getDrawable(mContext, R.color.colorAccent)))
+                        .into(ivPreview);
             }
         });
 
         findViewById(R.id.btn_duration).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DurationCache.with(getApplicationContext()).load(voiceUrl).placeholder(0L).into(vvDuraion);
-                DurationCache.with(getApplicationContext()).load(voiceUrl).placeholder(0L).into(tvDuraion);
+                DurationCache.with(getApplicationContext())
+                        .load(voiceUrl)
+                        .apply(new RequestOptions<Long>()
+                                .placeholder(0L))
+                        .into(vvDuraion);
+
+                DurationCache.with(getApplicationContext())
+                        .load(voiceUrl)
+                        .apply(new RequestOptions<Long>()
+                                .placeholder(0L))
+                        .into(tvDuraion);
             }
         });
 
@@ -72,37 +95,44 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String url = "https://www.baidu.com/img/bd_logo1.png";
                 String url1 = "http://img2.imgtn.bdimg.com/it/u=764856423,3994964277&fm=26&gp=0.jpg";
-                ImageCache.with(getApplicationContext()).load(url).into(ivImage);
+                ImageCache.with(getApplicationContext())
+                        .load(url)
+                        .apply(new RequestOptions<Bitmap>())
+                        .into(ivImage);
             }
         });
 
         findViewById(R.id.btn_compress).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                CompressCache.with(getApplicationContext())
-//                        .load(CompressHelper.getPath(mContext))
-//                        .apply(new RequestOptions().setFocusAlpha(false).ignoreBy(200))
-//                        .into(ivCompress);
-
                 CompressCache.with(getApplicationContext())
                         .load(CompressHelper.getPath(mContext))
-                        .apply(new RequestOptions().setFocusAlpha(false).ignoreBy(200))
-                        .file(new CacheListener<File>() {
-                            @Override
-                            public void onLoading() {
+                        .apply(new com.d.lib.cache.component.compress.RequestOptions()
+                                .setFocusAlpha(false)
+                                .ignoreBy(200))
+                        .into(ivCompress);
 
-                            }
-
-                            @Override
-                            public void onSuccess(File result) {
-                                Log.d("Cache", "CompressCache onSuccess--> " + result.getAbsolutePath());
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                Log.d("Cache", "CompressCache onError--> " + e.toString());
-                            }
-                        });
+//                CompressCache.with(getApplicationContext())
+//                        .load(CompressHelper.getPath(mContext))
+//                        .apply(new com.d.lib.cache.component.compress.RequestOptions()
+//                                .setFocusAlpha(false)
+//                                .ignoreBy(200))
+//                        .file(new CacheListener<File>() {
+//                            @Override
+//                            public void onLoading() {
+//
+//                            }
+//
+//                            @Override
+//                            public void onSuccess(File result) {
+//                                Log.d("Cache", "CompressCache onSuccess--> " + result.getAbsolutePath());
+//                            }
+//
+//                            @Override
+//                            public void onError(Throwable e) {
+//                                Log.d("Cache", "CompressCache onError--> " + e.toString());
+//                            }
+//                        });
             }
         });
     }

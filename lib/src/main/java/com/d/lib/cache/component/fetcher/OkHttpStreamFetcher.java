@@ -3,7 +3,7 @@ package com.d.lib.cache.component.fetcher;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.d.lib.cache.exception.CacheException;
+import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.utils.Preconditions;
 
 import java.io.IOException;

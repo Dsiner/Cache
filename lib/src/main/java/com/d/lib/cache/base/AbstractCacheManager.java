@@ -3,8 +3,7 @@ package com.d.lib.cache.base;
 import android.content.Context;
 import android.support.annotation.NonNull;
 
-import com.d.lib.cache.listener.CacheListener;
-import com.d.lib.cache.utils.threadpool.ThreadPool;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,14 +11,30 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public abstract class AbstractCacheManager<K, T> extends CacheManager {
-    protected LruCache<K, T> mLruCache;
-    protected HashMap<K, ArrayList<CacheListener<T>>> mHashMap;
+public abstract class AbstractCacheManager<R extends AbstractCacheManager, K, T> extends CacheManager {
+    protected int mScheduler;
+    protected int mObserveOnScheduler;
 
     protected AbstractCacheManager(Context context) {
+        this(context, Schedulers.io(), Schedulers.mainThread());
+    }
+
+    protected AbstractCacheManager(Context context,
+                                   @Schedulers.Scheduler int scheduler,
+                                   @Schedulers.Scheduler int observeOnScheduler) {
         super(context);
-        mLruCache = new LruCache<>();
-        mHashMap = new HashMap<>();
+        mScheduler = scheduler;
+        mObserveOnScheduler = observeOnScheduler;
+    }
+
+    public R subscribeOn(@Schedulers.Scheduler int scheduler) {
+        this.mScheduler = scheduler;
+        return (R) this;
+    }
+
+    public R observeOn(@Schedulers.Scheduler int scheduler) {
+        this.mObserveOnScheduler = scheduler;
+        return (R) this;
     }
 
     public void load(final Context context, final K key, final CacheListener<T> listener) {
@@ -29,7 +44,7 @@ public abstract class AbstractCacheManager<K, T> extends CacheManager {
         if (isLru(key, listener)) {
             return;
         }
-        ThreadPool.getIns().executeTask(new Runnable() {
+        Schedulers.switchThread(mScheduler, new Runnable() {
             @Override
             public void run() {
                 if (isDisk(key, listener)) {
@@ -41,7 +56,7 @@ public abstract class AbstractCacheManager<K, T> extends CacheManager {
     }
 
     protected void success(final K key, final T value, final CacheListener<T> l) {
-        ThreadPool.getIns().executeMain(new Runnable() {
+        Schedulers.switchThread(mObserveOnScheduler, new Runnable() {
             @Override
             public void run() {
                 successImplementation(key, value);
@@ -52,18 +67,18 @@ public abstract class AbstractCacheManager<K, T> extends CacheManager {
     private void successImplementation(final K key, final T value) {
         // Save to cache
         putLru(key, value);
-        ArrayList<CacheListener<T>> listeners = mHashMap.get(key);
+        ArrayList<CacheListener<T>> listeners = getHashMap().get(key);
         if (listeners != null) {
             for (int i = 0; i < listeners.size(); i++) {
                 CacheListener<T> listener = listeners.get(i);
                 listener.onSuccess(value);
             }
-            mHashMap.remove(key);
+            getHashMap().remove(key);
         }
     }
 
     protected void error(final K key, final Throwable e, final CacheListener<T> l) {
-        ThreadPool.getIns().executeMain(new Runnable() {
+        Schedulers.switchThread(mObserveOnScheduler, new Runnable() {
             @Override
             public void run() {
                 errorImplementation(key, e);
@@ -72,19 +87,19 @@ public abstract class AbstractCacheManager<K, T> extends CacheManager {
     }
 
     private void errorImplementation(final K key, final Throwable e) {
-        ArrayList<CacheListener<T>> listeners = mHashMap.get(key);
+        ArrayList<CacheListener<T>> listeners = getHashMap().get(key);
         if (listeners != null) {
             for (int i = 0; i < listeners.size(); i++) {
                 listeners.get(i).onError(e);
             }
-            mHashMap.remove(key);
+            getHashMap().remove(key);
         }
     }
 
     protected boolean isLoading(final K key, final CacheListener<T> l) {
-        if (mHashMap.containsKey(key)) {
+        if (getHashMap().containsKey(key)) {
             if (l != null) {
-                ArrayList<CacheListener<T>> listeners = mHashMap.get(key);
+                ArrayList<CacheListener<T>> listeners = getHashMap().get(key);
                 listeners.add(l);
                 l.onLoading();
             }
@@ -94,13 +109,13 @@ public abstract class AbstractCacheManager<K, T> extends CacheManager {
             l.onLoading();
             ArrayList<CacheListener<T>> listeners = new ArrayList<>();
             listeners.add(l);
-            mHashMap.put(key, listeners);
+            getHashMap().put(key, listeners);
         }
         return false;
     }
 
     protected boolean isLru(final K key, final CacheListener<T> listener) {
-        final T valueLru = mLruCache.get(key);
+        final T valueLru = getLruCache().get(key);
         if (valueLru != null) {
             success(key, valueLru, listener);
             return true;
@@ -109,7 +124,7 @@ public abstract class AbstractCacheManager<K, T> extends CacheManager {
     }
 
     protected void putLru(K key, T value) {
-        mLruCache.put(key, value);
+        getLruCache().put(key, value);
     }
 
     protected boolean isDisk(final K key, final CacheListener<T> listener) {
@@ -121,12 +136,12 @@ public abstract class AbstractCacheManager<K, T> extends CacheManager {
         return false;
     }
 
-    public void release() {
-        mLruCache.clear();
-    }
-
     @NonNull
     protected abstract String getPreFix();
+
+    public abstract LruCache<K, T> getLruCache();
+
+    public abstract HashMap<K, ArrayList<CacheListener<T>>> getHashMap();
 
     protected abstract void absLoad(final Context context, final K key, final CacheListener<T> listener);
 

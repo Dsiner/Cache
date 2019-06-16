@@ -3,36 +3,26 @@ package com.d.lib.cache.base;
 import android.app.Activity;
 import android.content.Context;
 
-import com.d.lib.cache.listener.CacheListener;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
 import java.lang.ref.WeakReference;
 
 /**
  * Created by D on 2018/6/8.
  */
-public abstract class AbstractCache<R extends AbstractCache, Target, Key, Placeholder, Result> {
+public abstract class AbstractCache<R extends AbstractCache, Target, Key, RequestOptions> {
     protected WeakReference<Context> mContext;
     protected WeakReference<Target> mTarget;
     protected Key mKey;
-    protected Placeholder mPlaceHolder;
-    protected Placeholder mError;
+    protected RequestOptions mRequestOptions;
 
     protected AbstractCache(Context context) {
-        this.mContext = new WeakReference<>(context instanceof Activity ? context : context.getApplicationContext());
+        this.mContext = new WeakReference<>(context instanceof Activity
+                ? context : context.getApplicationContext());
     }
 
     public R load(Key key) {
         this.mKey = key;
-        return (R) this;
-    }
-
-    public R placeholder(Placeholder placeHolder) {
-        this.mPlaceHolder = placeHolder;
-        return (R) this;
-    }
-
-    public R error(Placeholder error) {
-        this.mError = error;
         return (R) this;
     }
 
@@ -53,7 +43,22 @@ public abstract class AbstractCache<R extends AbstractCache, Target, Key, Placeh
                 || mContext.get() instanceof Activity && ((Activity) mContext.get()).isFinishing();
     }
 
-    public abstract void into(final Target target);
+    public static abstract class AbsObserve<C extends AbsObserve, Target, Result> {
+        protected int mScheduler = Schedulers.io();
+        protected int mObserveOnScheduler = Schedulers.mainThread();
 
-    public abstract void listener(CacheListener<Result> l);
+        public C subscribeOn(@Schedulers.Scheduler int scheduler) {
+            this.mScheduler = scheduler;
+            return (C) this;
+        }
+
+        public C observeOn(@Schedulers.Scheduler int scheduler) {
+            this.mObserveOnScheduler = scheduler;
+            return (C) this;
+        }
+
+        public abstract void into(final Target target);
+
+        public abstract void listener(CacheListener<Result> l);
+    }
 }

@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.d.lib.cache.listener.CacheListener;
+import com.d.lib.cache.base.CacheListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,12 +39,12 @@ public class Compress {
 
     public void compress(@NonNull CacheListener<File> listener) {
         this.mTargetDir = getPath();
-        File outFile = getImageCacheFile(mContext, Checker.SINGLE.extSuffix(mRequestOptions.provider));
+        File outFile = getImageCacheFile(mContext, Checker.SINGLE.extSuffix(mRequestOptions.mProvider));
         try {
-            File result = Checker.SINGLE.needCompress(mRequestOptions.leastCompressSize,
-                    mRequestOptions.provider.getPath()) ?
-                    new Engine(mRequestOptions.provider, outFile, mRequestOptions.focusAlpha).compress() :
-                    new File(mRequestOptions.provider.getPath());
+            File result = Checker.SINGLE.needCompress(mRequestOptions.mLeastCompressSize,
+                    mRequestOptions.mProvider.getPath()) ?
+                    new Engine(mRequestOptions.mProvider, outFile, mRequestOptions.mFocusAlpha).compress() :
+                    new File(mRequestOptions.mProvider.getPath());
             listener.onSuccess(result);
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,7 +63,7 @@ public class Compress {
         }
 
         String cacheBuilder = mTargetDir + "/"
-                + mRequestOptions.provider.getPath().hashCode()
+                + mRequestOptions.mProvider.getPath().hashCode()
                 + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
 
         return new File(cacheBuilder);

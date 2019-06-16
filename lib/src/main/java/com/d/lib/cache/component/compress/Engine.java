@@ -4,31 +4,39 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 
+import com.d.lib.cache.utils.Util;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Responsible for starting compress and managing active and cached resources.
  */
 class Engine {
-    private InputStreamProvider mSrcImg;
-    private File mTagImg;
+    private InputStreamProvider mProvider;
+    private File mFile;
     private int mSrcWidth;
     private int mSrcHeight;
     private boolean mFocusAlpha;
 
-    Engine(InputStreamProvider srcImg, File tagImg, boolean focusAlpha) throws IOException {
-        this.mTagImg = tagImg;
-        this.mSrcImg = srcImg;
+    Engine(InputStreamProvider provider, File file, boolean focusAlpha) throws IOException {
+        this.mFile = file;
+        this.mProvider = provider;
         this.mFocusAlpha = focusAlpha;
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         options.inSampleSize = 1;
-
-        BitmapFactory.decodeStream(srcImg.open(), null, options);
+        InputStream input = null;
+        try {
+            input = provider.open();
+            BitmapFactory.decodeStream(input, null, options);
+        } finally {
+            Util.closeQuietly(input);
+        }
         this.mSrcWidth = options.outWidth;
         this.mSrcHeight = options.outHeight;
     }
@@ -70,21 +78,37 @@ class Engine {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = computeSize();
 
-        Bitmap tagBitmap = BitmapFactory.decodeStream(mSrcImg.open(), null, options);
+        Bitmap bitmap = null;
+        InputStream input = null;
+        try {
+            input = mProvider.open();
+            bitmap = BitmapFactory.decodeStream(mProvider.open(), null, options);
+        } finally {
+            Util.closeQuietly(input);
+        }
+
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
-        if (Checker.SINGLE.isJPG(mSrcImg.open())) {
-            tagBitmap = rotatingImage(tagBitmap, Checker.SINGLE.getOrientation(mSrcImg.open()));
+        try {
+            input = mProvider.open();
+            if (Checker.SINGLE.isJPG(input)) {
+                Util.closeQuietly(input);
+                input = mProvider.open();
+                bitmap = rotatingImage(bitmap, Checker.SINGLE.getOrientation(input));
+            }
+        } finally {
+            Util.closeQuietly(input);
         }
-        tagBitmap.compress(mFocusAlpha ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 60, stream);
-        tagBitmap.recycle();
 
-        FileOutputStream fos = new FileOutputStream(mTagImg);
+        bitmap.compress(mFocusAlpha ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 60, stream);
+        bitmap.recycle();
+
+        FileOutputStream fos = new FileOutputStream(mFile);
         fos.write(stream.toByteArray());
         fos.flush();
         fos.close();
         stream.close();
 
-        return mTagImg;
+        return mFile;
     }
 }

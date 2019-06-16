@@ -8,46 +8,51 @@ import java.util.Map;
  * Created by D on 2017/10/19.
  */
 public class LruCache<K, V> {
-    private int count = 12;
-    private LinkedHashMap<K, V> map;
+    private int mCount;
+    private LinkedHashMap<K, V> mMap;
 
     public LruCache() {
-        map = new LinkedHashMap<>();
+        this(12);
+    }
+
+    public LruCache(int count) {
+        this.mMap = new LinkedHashMap<>();
+        this.mCount = count;
     }
 
     public void setCount(int count) {
-        this.count = count;
+        this.mCount = count;
     }
 
     public void put(K key, V value) {
         calculateSize(key);
-        if (count > 0) {
-            map.put(key, value);
+        if (mCount > 0) {
+            mMap.put(key, value);
         }
     }
 
     public V get(K key) {
-        return map.get(key);
+        return mMap.get(key);
     }
 
     public boolean containsKey(K key) {
-        return map.containsKey(key);
+        return mMap.containsKey(key);
     }
 
     public void remove(K key) {
-        map.remove(key);
+        mMap.remove(key);
     }
 
     public void clear() {
-        map.clear();
+        mMap.clear();
     }
 
     private void calculateSize(K key) {
-        if (map.size() >= count && !map.containsKey(key)) {
-            Iterator ite = map.entrySet().iterator();
+        if (mMap.size() >= mCount && !mMap.containsKey(key)) {
+            Iterator ite = mMap.entrySet().iterator();
             if (ite.hasNext()) {
                 Map.Entry<K, V> entry = (Map.Entry<K, V>) ite.next();
-                map.remove(entry.getKey());
+                mMap.remove(entry.getKey());
             }
         }
     }

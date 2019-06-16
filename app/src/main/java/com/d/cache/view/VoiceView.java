@@ -5,7 +5,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
-import com.d.lib.cache.listener.IDuration;
+import com.d.lib.cache.component.duration.IDuration;
 import com.d.lib.cache.utils.Util;
 
 /**
