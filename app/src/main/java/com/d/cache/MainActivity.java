@@ -2,7 +2,6 @@ package com.d.cache;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -13,11 +12,12 @@ import android.widget.TextView;
 import com.d.cache.compress.CompressHelper;
 import com.d.cache.view.VideoPreView;
 import com.d.cache.view.VoiceView;
+import com.d.lib.cache.base.RequestOptions;
 import com.d.lib.cache.component.compress.CompressCache;
 import com.d.lib.cache.component.duration.DurationCache;
+import com.d.lib.cache.component.frame.FrameBean;
 import com.d.lib.cache.component.frame.FrameCache;
 import com.d.lib.cache.component.image.ImageCache;
-import com.d.lib.cache.base.RequestOptions;
 import com.d.lib.cache.utils.threadpool.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
@@ -56,15 +56,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 FrameCache.with(getApplicationContext())
                         .load(videoUrl)
-                        .apply(new RequestOptions<Drawable>()
-                                .placeholder(ContextCompat.getDrawable(mContext, R.color.colorAccent)))
+                        .apply(new RequestOptions<FrameBean>()
+                                .placeholder(FrameBean.create(null, ContextCompat.getDrawable(mContext, R.color.colorAccent), null)))
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.mainThread())
                         .into(vpvPreview);
                 FrameCache.with(getApplicationContext())
                         .load(videoUrl)
-                        .apply(new RequestOptions<Drawable>()
-                                .placeholder(ContextCompat.getDrawable(mContext, R.color.colorAccent)))
+                        .apply(new RequestOptions<FrameBean>()
+                                .placeholder(FrameBean.create(null, ContextCompat.getDrawable(mContext, R.color.colorAccent), null)))
                         .into(ivPreview);
             }
         });

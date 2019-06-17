@@ -5,15 +5,13 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.d.lib.cache.R;
+import com.d.lib.cache.base.AbsObserve;
 import com.d.lib.cache.base.AbstractCache;
-import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.base.CacheListener;
 
 import java.io.File;
@@ -25,15 +23,15 @@ import java.io.InputStream;
  * ImageCache
  * Created by D on 2018/12/19.
  **/
-public class CompressCache extends AbstractCache<CompressCache, View, String, RequestOptions> {
+public class CompressCache extends AbstractCache<CompressCache,
+        CompressCache.Observe, String> {
+
+    private static int TAG_ID = R.id.lib_cache_tag_compress;
+
     private InputStreamProvider mProvider;
 
     private CompressCache(Context context) {
         super(context);
-    }
-
-    private static int getTag() {
-        return R.id.lib_cache_tag_compress;
     }
 
     @UiThread
@@ -42,11 +40,11 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
     }
 
     @Override
-    public CompressCache load(@NonNull String path) {
+    public CompressCache.Observe load(@NonNull String path) {
         return load(new File(path));
     }
 
-    public CompressCache load(@NonNull final File file) {
+    public CompressCache.Observe load(@NonNull final File file) {
         mProvider = new InputStreamProvider() {
             @Override
             public String getPath() {
@@ -58,10 +56,11 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
                 return new FileInputStream(file);
             }
         };
-        return super.load(mProvider.getPath());
+        mUri = mProvider.getPath();
+        return new Observe();
     }
 
-    public CompressCache load(@Nullable final Uri uri) {
+    public CompressCache.Observe load(@NonNull final Uri uri) {
         final Context appContext = getContext().getApplicationContext();
         mProvider = new InputStreamProvider() {
             @Override
@@ -74,17 +73,27 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
                 return appContext.getContentResolver().openInputStream(uri);
             }
         };
-        return super.load(mProvider.getPath());
-    }
-
-    public Observe apply(RequestOptions options) {
-        this.mRequestOptions = options;
-        this.mRequestOptions.mProvider = mProvider;
+        mUri = mProvider.getPath();
         return new Observe();
     }
 
-    public class Observe extends AbsObserve<Observe, View, Bitmap> {
+    public class Observe extends AbsObserve<Observe,
+            View, Bitmap, RequestOptions<Bitmap>> {
+
+        @Override
+        protected int TAG() {
+            return TAG_ID;
+        }
+
         Observe() {
+            mRequestOptions = new RequestOptions<>();
+        }
+
+        @Override
+        public Observe apply(@NonNull RequestOptions<Bitmap> options) {
+            this.mRequestOptions = options;
+            this.mRequestOptions.provider = mProvider;
+            return this;
         }
 
         @Override
@@ -92,42 +101,27 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
             if (isFinishing() || view == null) {
                 return;
             }
-            if (TextUtils.isEmpty(mKey)) {
-                // Just error
-                if (view instanceof ImageView) {
-                    ((ImageView) view).setImageDrawable(mRequestOptions.mError != null
-                            ? mRequestOptions.mError : mRequestOptions.mPlaceHolder);
-                }
-                return;
-            }
             setTarget(view);
-            Object tag = view.getTag(getTag());
-            if (tag != null && tag instanceof String
-                    && TextUtils.equals((String) tag, mKey)) {
-                // Not refresh
+            if (!attached(mUri)) {
                 return;
             }
-            view.setTag(getTag(), mKey);
             new CompressBitmapCacheManager(getContext().getApplicationContext())
                     .subscribeOn(mScheduler)
                     .observeOn(mObserveOnScheduler)
                     .setRequestOptions(mRequestOptions)
-                    .load(getContext().getApplicationContext(), mRequestOptions.mProvider,
+                    .load(getContext().getApplicationContext(), mRequestOptions.provider,
                             new CacheListener<Bitmap>() {
                                 @Override
                                 public void onLoading() {
-                                    if (isFinished()) {
+                                    if (isFinishing() || isDetached(mUri)) {
                                         return;
                                     }
-                                    if (mRequestOptions.mPlaceHolder == null) {
-                                        return;
-                                    }
-                                    setTarget(mRequestOptions.mPlaceHolder);
+                                    setTarget(mRequestOptions.placeHolder);
                                 }
 
                                 @Override
                                 public void onSuccess(Bitmap result) {
-                                    if (isFinished()) {
+                                    if (isFinishing() || isDetached(mUri)) {
                                         return;
                                     }
                                     setTarget(result);
@@ -135,16 +129,16 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
 
                                 @Override
                                 public void onError(Throwable e) {
-                                    if (isFinished()) {
+                                    if (isFinishing() || isDetached(mUri)) {
                                         return;
                                     }
-                                    if (mRequestOptions.mError == null) {
-                                        return;
-                                    }
-                                    setTarget(mRequestOptions.mError);
+                                    setTarget(mRequestOptions.error);
                                 }
 
                                 private void setTarget(Object result) {
+                                    if (result == null) {
+                                        return;
+                                    }
                                     if (getTarget() instanceof ImageView) {
                                         if (result instanceof Bitmap) {
                                             ((ImageView) getTarget()).setImageBitmap((Bitmap) result);
@@ -152,15 +146,6 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
                                             ((ImageView) getTarget()).setImageDrawable((Drawable) result);
                                         }
                                     }
-                                }
-
-                                private boolean isFinished() {
-                                    if (isFinishing() || getTarget() == null) {
-                                        return true;
-                                    }
-                                    Object tag = getTarget().getTag(getTag());
-                                    return tag == null || !(tag instanceof String)
-                                            || !TextUtils.equals((String) tag, mKey);
                                 }
                             });
         }
@@ -170,36 +155,22 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
             if (isFinishing()) {
                 return;
             }
-            if (TextUtils.isEmpty(mKey)) {
-                // Just error
-                if (l != null) {
-                    l.onError(new CacheException("Url must not be empty!"));
-                }
-                return;
-            }
             new CompressBitmapCacheManager(getContext())
                     .subscribeOn(mScheduler)
                     .observeOn(mObserveOnScheduler)
                     .setRequestOptions(mRequestOptions)
-                    .load(getContext(), mRequestOptions.mProvider, l);
+                    .load(getContext(), mRequestOptions.provider, l);
         }
 
         public void file(CacheListener<File> l) {
             if (isFinishing()) {
                 return;
             }
-            if (TextUtils.isEmpty(mKey)) {
-                // Just error
-                if (l != null) {
-                    l.onError(new CacheException("Url must not be empty!"));
-                }
-                return;
-            }
             new CompressFileCacheManager(getContext())
                     .subscribeOn(mScheduler)
                     .observeOn(mObserveOnScheduler)
                     .setRequestOptions(mRequestOptions)
-                    .load(getContext(), mRequestOptions.mProvider, l);
+                    .load(getContext(), mRequestOptions.provider, l);
         }
     }
 
@@ -209,7 +180,7 @@ public class CompressCache extends AbstractCache<CompressCache, View, String, Re
         if (view == null) {
             return;
         }
-        view.setTag(getTag(), "");
+        view.setTag(TAG_ID, "");
     }
 
     @SuppressWarnings("unused")

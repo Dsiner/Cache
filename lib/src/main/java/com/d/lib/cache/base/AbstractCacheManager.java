@@ -2,6 +2,7 @@ package com.d.lib.cache.base;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import com.d.lib.cache.utils.threadpool.Schedulers;
 
@@ -38,6 +39,10 @@ public abstract class AbstractCacheManager<R extends AbstractCacheManager, K, T>
     }
 
     public void load(final Context context, final K key, final CacheListener<T> listener) {
+        if (key == null || key instanceof CharSequence && TextUtils.isEmpty((CharSequence) key)) {
+            error(key, new CacheException("Uri must not be empty!"), listener);
+            return;
+        }
         if (isLoading(key, listener)) {
             return;
         }

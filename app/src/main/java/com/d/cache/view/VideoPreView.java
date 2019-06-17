@@ -42,6 +42,6 @@ public class VideoPreView extends FrameLayout implements IFrame {
     @Override
     public void setFrame(Drawable drawable, Long duration) {
         ivPreview.setImageDrawable(drawable);
-        tvDuration.setText("Duration：" + Util.formatTime(duration));
+        tvDuration.setText("Duration：" + (duration != null ? Util.formatTime(duration) : "--:--"));
     }
 }

@@ -4,13 +4,12 @@ import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.UiThread;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
 import com.d.lib.cache.R;
+import com.d.lib.cache.base.AbsObserve;
 import com.d.lib.cache.base.AbstractCache;
-import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.RequestOptions;
 import com.d.lib.cache.utils.Util;
@@ -20,14 +19,13 @@ import com.d.lib.cache.utils.Util;
  * Created by D on 2017/10/19.
  */
 @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
-public class DurationCache extends AbstractCache<DurationCache, View, String, RequestOptions<Long>> {
+public class DurationCache extends AbstractCache<DurationCache,
+        DurationCache.Observe, String> {
+
+    private static int TAG_ID = R.id.lib_cache_tag_duration;
 
     private DurationCache(Context context) {
         super(context);
-    }
-
-    private static int getTag() {
-        return R.id.lib_cache_tag_duration;
     }
 
     @UiThread
@@ -36,17 +34,21 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Re
     }
 
     @Override
-    public DurationCache load(String url) {
-        return super.load(url);
-    }
-
-    public Observe apply(RequestOptions<Long> options) {
-        this.mRequestOptions = options;
+    public DurationCache.Observe load(String url) {
+        mUri = url;
         return new Observe();
     }
 
-    public class Observe extends AbsObserve<Observe, View, Long> {
+    public class Observe extends AbsObserve<Observe,
+            View, Long, RequestOptions<Long>> {
+
+        @Override
+        protected int TAG() {
+            return TAG_ID;
+        }
+
         Observe() {
+            mRequestOptions = new RequestOptions<>();
         }
 
         @Override
@@ -54,45 +56,25 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Re
             if (isFinishing() || view == null) {
                 return;
             }
-            if (TextUtils.isEmpty(mKey)) {
-                // Just error
-                if (view instanceof IDuration) {
-                    ((IDuration) view).setDuration(mRequestOptions.mError != null
-                            ? mRequestOptions.mError : mRequestOptions.mPlaceHolder);
-                } else if (view instanceof TextView) {
-                    long time = mRequestOptions.mError != null
-                            ? mRequestOptions.mError
-                            : mRequestOptions.mPlaceHolder != null ? mRequestOptions.mPlaceHolder : 0;
-                    ((TextView) view).setText(Util.formatTime(time));
-                }
-                return;
-            }
             setTarget(view);
-            Object tag = view.getTag(getTag());
-            if (tag != null && tag instanceof String
-                    && TextUtils.equals((String) tag, mKey)) {
-                // Not refresh
+            if (!attached(mUri)) {
                 return;
             }
-            view.setTag(getTag(), mKey);
             new DurationCacheManager(getContext())
                     .subscribeOn(mScheduler)
                     .observeOn(mObserveOnScheduler)
-                    .load(getContext(), mKey, new CacheListener<Long>() {
+                    .load(getContext(), mUri, new CacheListener<Long>() {
                         @Override
                         public void onLoading() {
-                            if (isFinished()) {
+                            if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }
-                            if (mRequestOptions.mPlaceHolder == null) {
-                                return;
-                            }
-                            setTarget(mRequestOptions.mPlaceHolder);
+                            setTarget(mRequestOptions.placeHolder);
                         }
 
                         @Override
                         public void onSuccess(Long result) {
-                            if (isFinished()) {
+                            if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }
                             setTarget(result);
@@ -100,31 +82,21 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Re
 
                         @Override
                         public void onError(Throwable e) {
-                            if (isFinished()) {
+                            if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }
-                            if (mRequestOptions.mError == null) {
-                                return;
-                            }
-                            setTarget(mRequestOptions.mError);
+                            setTarget(mRequestOptions.error);
                         }
 
                         private void setTarget(Long value) {
+                            if (value == null) {
+                                return;
+                            }
                             if (getTarget() instanceof IDuration) {
                                 ((IDuration) getTarget()).setDuration(value);
                             } else if (getTarget() instanceof TextView) {
-                                long time = value != null ? value : 0;
-                                ((TextView) getTarget()).setText(Util.formatTime(time));
+                                ((TextView) getTarget()).setText(Util.formatTime(value));
                             }
-                        }
-
-                        private boolean isFinished() {
-                            if (isFinishing() || getTarget() == null) {
-                                return true;
-                            }
-                            Object tag = getTarget().getTag(getTag());
-                            return tag == null || !(tag instanceof String)
-                                    || !TextUtils.equals((String) tag, mKey);
                         }
                     });
         }
@@ -134,17 +106,10 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Re
             if (isFinishing()) {
                 return;
             }
-            if (TextUtils.isEmpty(mKey)) {
-                // Just error
-                if (l != null) {
-                    l.onError(new CacheException("Url must not be empty!"));
-                }
-                return;
-            }
             new DurationCacheManager(getContext())
                     .subscribeOn(mScheduler)
                     .observeOn(mObserveOnScheduler)
-                    .load(getContext(), mKey, l);
+                    .load(getContext(), mUri, l);
         }
     }
 
@@ -154,7 +119,7 @@ public class DurationCache extends AbstractCache<DurationCache, View, String, Re
         if (view == null) {
             return;
         }
-        view.setTag(getTag(), "");
+        view.setTag(TAG_ID, "");
     }
 
     @SuppressWarnings("unused")

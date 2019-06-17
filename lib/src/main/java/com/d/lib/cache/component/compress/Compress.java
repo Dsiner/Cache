@@ -39,12 +39,12 @@ public class Compress {
 
     public void compress(@NonNull CacheListener<File> listener) {
         this.mTargetDir = getPath();
-        File outFile = getImageCacheFile(mContext, Checker.SINGLE.extSuffix(mRequestOptions.mProvider));
+        File outFile = getImageCacheFile(mContext, Checker.SINGLE.extSuffix(mRequestOptions.provider));
         try {
-            File result = Checker.SINGLE.needCompress(mRequestOptions.mLeastCompressSize,
-                    mRequestOptions.mProvider.getPath()) ?
-                    new Engine(mRequestOptions.mProvider, outFile, mRequestOptions.mFocusAlpha).compress() :
-                    new File(mRequestOptions.mProvider.getPath());
+            File result = Checker.SINGLE.needCompress(mRequestOptions.leastCompressSize,
+                    mRequestOptions.provider.getPath()) ?
+                    new Engine(mRequestOptions.provider, outFile, mRequestOptions.focusAlpha).compress() :
+                    new File(mRequestOptions.provider.getPath());
             listener.onSuccess(result);
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,7 +63,7 @@ public class Compress {
         }
 
         String cacheBuilder = mTargetDir + "/"
-                + mRequestOptions.mProvider.getPath().hashCode()
+                + mRequestOptions.provider.getPath().hashCode()
                 + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
 
         return new File(cacheBuilder);

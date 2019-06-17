@@ -3,13 +3,12 @@ package com.d.lib.cache.component.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.annotation.UiThread;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.d.lib.cache.R;
+import com.d.lib.cache.base.AbsObserve;
 import com.d.lib.cache.base.AbstractCache;
-import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.RequestOptions;
 
@@ -17,14 +16,13 @@ import com.d.lib.cache.base.RequestOptions;
  * ImageCache
  * Created by D on 2018/12/19.
  **/
-public class ImageCache extends AbstractCache<ImageCache, View, String, RequestOptions<Bitmap>> {
+public class ImageCache extends AbstractCache<ImageCache,
+        ImageCache.Observe, String> {
+
+    private static int TAG_ID = R.id.lib_cache_tag_image;
 
     private ImageCache(Context context) {
         super(context);
-    }
-
-    private static int getTag() {
-        return R.id.lib_cache_tag_image;
     }
 
     @UiThread
@@ -33,13 +31,9 @@ public class ImageCache extends AbstractCache<ImageCache, View, String, RequestO
     }
 
     @Override
-    public ImageCache load(String url) {
-        return super.load(url);
-    }
-
-    public Observe apply(RequestOptions<Bitmap> options) {
-        this.mRequestOptions = options;
-        return new Observe(this);
+    public ImageCache.Observe load(String url) {
+        mUri = url;
+        return new ImageCache.Observe();
     }
 
     @SuppressWarnings("unused")
@@ -48,7 +42,7 @@ public class ImageCache extends AbstractCache<ImageCache, View, String, RequestO
         if (view == null) {
             return;
         }
-        view.setTag(getTag(), "");
+        view.setTag(TAG_ID, "");
     }
 
     @SuppressWarnings("unused")
@@ -60,50 +54,40 @@ public class ImageCache extends AbstractCache<ImageCache, View, String, RequestO
         ImageCacheManager.release();
     }
 
-    public static class Observe extends AbsObserve<Observe, View, Bitmap> {
-        private ImageCache mCache;
+    public class Observe extends AbsObserve<Observe,
+            View, Bitmap, RequestOptions<Bitmap>> {
 
-        Observe(ImageCache cache) {
-            mCache = cache;
+        @Override
+        protected int TAG() {
+            return TAG_ID;
+        }
+
+        Observe() {
+            mRequestOptions = new RequestOptions<>();
         }
 
         @Override
         public void into(View view) {
-            if (mCache.isFinishing() || view == null) {
+            if (isFinishing() || view == null) {
                 return;
             }
-            if (TextUtils.isEmpty(mCache.mKey)) {
-                // Just error
-                if (view instanceof ImageView) {
-                    ((ImageView) view).setImageBitmap(mCache.mRequestOptions.mError != null
-                            ? mCache.mRequestOptions.mError : mCache.mRequestOptions.mPlaceHolder);
-                }
+            setTarget(view);
+            if (!attached(mUri)) {
                 return;
             }
-            mCache.setTarget(view);
-            Object tag = view.getTag(getTag());
-            if (tag != null && tag instanceof String
-                    && TextUtils.equals((String) tag, mCache.mKey)) {
-                // Not refresh
-                return;
-            }
-            view.setTag(getTag(), mCache.mKey);
-            new ImageCacheManager(mCache.getContext().getApplicationContext())
-                    .load(mCache.getContext().getApplicationContext(), mCache.mKey, new CacheListener<Bitmap>() {
+            new ImageCacheManager(getContext().getApplicationContext())
+                    .load(getContext().getApplicationContext(), mUri, new CacheListener<Bitmap>() {
                         @Override
                         public void onLoading() {
-                            if (isFinished()) {
+                            if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }
-                            if (mCache.mRequestOptions.mPlaceHolder == null) {
-                                return;
-                            }
-                            setTarget(mCache.mRequestOptions.mPlaceHolder);
+                            setTarget(mRequestOptions.placeHolder);
                         }
 
                         @Override
                         public void onSuccess(Bitmap result) {
-                            if (isFinished()) {
+                            if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }
                             setTarget(result);
@@ -111,45 +95,29 @@ public class ImageCache extends AbstractCache<ImageCache, View, String, RequestO
 
                         @Override
                         public void onError(Throwable e) {
-                            if (isFinished()) {
+                            if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }
-                            if (mCache.mRequestOptions.mError == null) {
-                                return;
-                            }
-                            setTarget(mCache.mRequestOptions.mError);
+                            setTarget(mRequestOptions.error);
                         }
 
                         private void setTarget(Bitmap result) {
-                            if (mCache.getTarget() instanceof ImageView) {
-                                ((ImageView) mCache.getTarget()).setImageBitmap(result);
+                            if (result == null) {
+                                return;
                             }
-                        }
-
-                        private boolean isFinished() {
-                            if (mCache.isFinishing() || mCache.getTarget() == null) {
-                                return true;
+                            if (getTarget() instanceof ImageView) {
+                                ((ImageView) getTarget()).setImageBitmap(result);
                             }
-                            Object tag = mCache.getTarget().getTag(getTag());
-                            return tag == null || !(tag instanceof String)
-                                    || !TextUtils.equals((String) tag, mCache.mKey);
                         }
                     });
         }
 
         @Override
         public void listener(CacheListener<Bitmap> l) {
-            if (mCache.isFinishing()) {
+            if (isFinishing()) {
                 return;
             }
-            if (TextUtils.isEmpty(mCache.mKey)) {
-                // Just error
-                if (l != null) {
-                    l.onError(new CacheException("Url must not be empty!"));
-                }
-                return;
-            }
-            new ImageCacheManager(mCache.getContext()).load(mCache.getContext(), mCache.mKey, l);
+            new ImageCacheManager(getContext()).load(getContext(), mUri, l);
         }
     }
 }
