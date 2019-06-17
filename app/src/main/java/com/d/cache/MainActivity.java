@@ -6,7 +6,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -14,15 +13,12 @@ import android.widget.TextView;
 import com.d.cache.compress.CompressHelper;
 import com.d.cache.view.VideoPreView;
 import com.d.cache.view.VoiceView;
-import com.d.lib.cache.CompressCache;
-import com.d.lib.cache.DurationCache;
-import com.d.lib.cache.FrameCache;
-import com.d.lib.cache.ImageCache;
-import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.component.compress.CompressCache;
+import com.d.lib.cache.component.duration.DurationCache;
+import com.d.lib.cache.component.frame.FrameCache;
+import com.d.lib.cache.component.image.ImageCache;
 import com.d.lib.cache.base.RequestOptions;
 import com.d.lib.cache.utils.threadpool.Schedulers;
-
-import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
     private final String videoUrl = "http://vpls.cdn.videojj.com/scene/video02_720p.mp4";

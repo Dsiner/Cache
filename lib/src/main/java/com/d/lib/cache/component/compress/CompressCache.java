@@ -1,4 +1,4 @@
-package com.d.lib.cache;
+package com.d.lib.cache.component.compress;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -11,13 +11,10 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.d.lib.cache.R;
 import com.d.lib.cache.base.AbstractCache;
 import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.base.CacheListener;
-import com.d.lib.cache.component.compress.CompressBitmapCacheManager;
-import com.d.lib.cache.component.compress.CompressFileCacheManager;
-import com.d.lib.cache.component.compress.InputStreamProvider;
-import com.d.lib.cache.component.compress.RequestOptions;
 
 import java.io.File;
 import java.io.FileInputStream;

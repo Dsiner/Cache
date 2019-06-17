@@ -1,69 +1,69 @@
-package com.d.lib.cache;
+package com.d.lib.cache.component.duration;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.UiThread;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.d.lib.cache.R;
 import com.d.lib.cache.base.AbstractCache;
 import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.RequestOptions;
-import com.d.lib.cache.component.frame.FrameBean;
-import com.d.lib.cache.component.frame.FrameCacheManager;
-import com.d.lib.cache.component.frame.IFrame;
+import com.d.lib.cache.utils.Util;
 
 /**
- * Cache - Get video first frame & duration
+ * Cache - Get media duration
  * Created by D on 2017/10/19.
  */
 @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
-public class FrameCache extends AbstractCache<FrameCache, View, String, RequestOptions<Drawable>> {
+public class DurationCache extends AbstractCache<DurationCache, View, String, RequestOptions<Long>> {
 
-    private FrameCache(Context context) {
+    private DurationCache(Context context) {
         super(context);
     }
 
     private static int getTag() {
-        return R.id.lib_cache_tag_frame;
+        return R.id.lib_cache_tag_duration;
     }
 
     @UiThread
-    public static FrameCache with(Context context) {
-        return new FrameCache(context);
+    public static DurationCache with(Context context) {
+        return new DurationCache(context);
     }
 
     @Override
-    public FrameCache load(String url) {
+    public DurationCache load(String url) {
         return super.load(url);
     }
 
-    public Observe apply(RequestOptions<Drawable> options) {
+    public Observe apply(RequestOptions<Long> options) {
         this.mRequestOptions = options;
         return new Observe();
     }
 
-    public class Observe extends AbsObserve<Observe, View, FrameBean> {
+    public class Observe extends AbsObserve<Observe, View, Long> {
         Observe() {
         }
 
         @Override
-        public void into(View view) {
+        public void into(final View view) {
             if (isFinishing() || view == null) {
                 return;
             }
             if (TextUtils.isEmpty(mKey)) {
                 // Just error
-                if (view instanceof IFrame) {
-                    ((IFrame) view).setFrame(mRequestOptions.mError != null
-                            ? mRequestOptions.mError : mRequestOptions.mPlaceHolder, 0L);
-                } else if (view instanceof ImageView) {
-                    ((ImageView) view).setImageDrawable(mRequestOptions.mError != null
+                if (view instanceof IDuration) {
+                    ((IDuration) view).setDuration(mRequestOptions.mError != null
                             ? mRequestOptions.mError : mRequestOptions.mPlaceHolder);
+                } else if (view instanceof TextView) {
+                    long time = mRequestOptions.mError != null
+                            ? mRequestOptions.mError
+                            : mRequestOptions.mPlaceHolder != null ? mRequestOptions.mPlaceHolder : 0;
+                    ((TextView) view).setText(Util.formatTime(time));
                 }
                 return;
             }
@@ -75,10 +75,10 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, RequestO
                 return;
             }
             view.setTag(getTag(), mKey);
-            new FrameCacheManager(getContext().getApplicationContext())
+            new DurationCacheManager(getContext())
                     .subscribeOn(mScheduler)
                     .observeOn(mObserveOnScheduler)
-                    .load(getContext().getApplicationContext(), mKey, new CacheListener<FrameBean>() {
+                    .load(getContext(), mKey, new CacheListener<Long>() {
                         @Override
                         public void onLoading() {
                             if (isFinished()) {
@@ -87,15 +87,15 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, RequestO
                             if (mRequestOptions.mPlaceHolder == null) {
                                 return;
                             }
-                            setTarget(mRequestOptions.mPlaceHolder, 0L);
+                            setTarget(mRequestOptions.mPlaceHolder);
                         }
 
                         @Override
-                        public void onSuccess(FrameBean result) {
+                        public void onSuccess(Long result) {
                             if (isFinished()) {
                                 return;
                             }
-                            setTarget(result.drawable, result.duration);
+                            setTarget(result);
                         }
 
                         @Override
@@ -106,14 +106,15 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, RequestO
                             if (mRequestOptions.mError == null) {
                                 return;
                             }
-                            setTarget(mRequestOptions.mError, 0L);
+                            setTarget(mRequestOptions.mError);
                         }
 
-                        private void setTarget(Drawable drawable, Long duration) {
-                            if (getTarget() instanceof IFrame) {
-                                ((IFrame) getTarget()).setFrame(drawable, duration);
-                            } else if (getTarget() instanceof ImageView) {
-                                ((ImageView) getTarget()).setImageDrawable(drawable);
+                        private void setTarget(Long value) {
+                            if (getTarget() instanceof IDuration) {
+                                ((IDuration) getTarget()).setDuration(value);
+                            } else if (getTarget() instanceof TextView) {
+                                long time = value != null ? value : 0;
+                                ((TextView) getTarget()).setText(Util.formatTime(time));
                             }
                         }
 
@@ -129,7 +130,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, RequestO
         }
 
         @Override
-        public void listener(CacheListener<FrameBean> l) {
+        public void listener(CacheListener<Long> l) {
             if (isFinishing()) {
                 return;
             }
@@ -140,7 +141,7 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, RequestO
                 }
                 return;
             }
-            new FrameCacheManager(getContext())
+            new DurationCacheManager(getContext())
                     .subscribeOn(mScheduler)
                     .observeOn(mObserveOnScheduler)
                     .load(getContext(), mKey, l);
@@ -162,6 +163,6 @@ public class FrameCache extends AbstractCache<FrameCache, View, String, RequestO
         if (context == null) {
             return;
         }
-        FrameCacheManager.release();
+        DurationCacheManager.release();
     }
 }

@@ -13,7 +13,7 @@ import com.d.lib.taskscheduler.TaskScheduler;
  */
 public class App extends Application {
     public final static String FILE_PATH = Environment.getExternalStorageDirectory().getPath()
-            + "/Cache/compress/";
+            + "/Cache/compress";
     public final static String PIC_NAME = "1.jpg";
 
     @Override
