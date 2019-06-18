@@ -1,31 +1,27 @@
 package com.d.lib.cache.component.compress;
 
-import android.graphics.BitmapFactory;
+import android.media.ExifInterface;
 import android.util.Log;
 
 import com.d.lib.cache.utils.Util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-enum Checker {
-    SINGLE;
+class ImageHelper {
 
     private static final String TAG = "Compress";
 
-    private static final String JPG = ".jpg";
-
-    private final byte[] JPEG_SIGNATURE = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
+    private static final byte[] JPEG_SIGNATURE = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
 
     /**
      * Determine if it is JPG.
      *
      * @param is image file input stream
      */
-    boolean isJPG(InputStream is) {
+    static boolean isJPG(InputStream is) {
         if (is == null) {
             return false;
         }
@@ -49,14 +45,8 @@ enum Checker {
         return isJPG(data);
     }
 
-    /**
-     * Returns the degrees in clockwise. Values are 0, 90, 180, or 270.
-     */
-    int getOrientation(InputStream is) {
-        return getOrientation(toByteArray(is));
-    }
-
-    private boolean isJPG(byte[] data) {
+    @Deprecated
+    private static boolean isJPG(byte[] data) {
         if (data == null || data.length < 3) {
             return false;
         }
@@ -64,7 +54,39 @@ enum Checker {
         return Arrays.equals(JPEG_SIGNATURE, signatureB);
     }
 
-    private int getOrientation(byte[] jpeg) {
+    public static int getImageDegree(String filename) {
+        int degree = 0;
+        try {
+            ExifInterface exifInterface = new ExifInterface(filename);
+            int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    degree = 90;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    degree = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    degree = 270;
+                    break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return degree;
+    }
+
+    /**
+     * Returns the degrees in clockwise. Values are 0, 90, 180, or 270.
+     */
+    static int getOrientation(InputStream is) {
+        return getOrientation(toByteArray(is));
+    }
+
+
+    @Deprecated
+    private static int getOrientation(byte[] jpeg) {
         if (jpeg == null) {
             return 0;
         }
@@ -160,30 +182,7 @@ enum Checker {
         return 0;
     }
 
-    String extSuffix(InputStreamProvider provider) {
-        InputStream input = null;
-        try {
-            input = provider.open();
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(input, null, options);
-            return options.outMimeType.replace("image/", ".");
-        } catch (Exception e) {
-            return JPG;
-        } finally {
-            Util.closeQuietly(input);
-        }
-    }
-
-    boolean needCompress(int leastCompressSize, String path) {
-        if (leastCompressSize > 0) {
-            File source = new File(path);
-            return source.exists() && source.length() > (leastCompressSize << 10);
-        }
-        return true;
-    }
-
-    private int pack(byte[] bytes, int offset, int length, boolean littleEndian) {
+    private static int pack(byte[] bytes, int offset, int length, boolean littleEndian) {
         int step = 1;
         if (littleEndian) {
             offset += length - 1;
@@ -198,7 +197,7 @@ enum Checker {
         return value;
     }
 
-    private byte[] toByteArray(InputStream is) {
+    private static byte[] toByteArray(InputStream is) {
         if (is == null) {
             return new byte[0];
         }

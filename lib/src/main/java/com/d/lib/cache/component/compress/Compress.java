@@ -8,48 +8,58 @@ import android.util.Log;
 
 import com.d.lib.cache.base.CacheListener;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileOutputStream;
 
 /**
- * FileCache
+ * Compress
  * Created by D on 2018/12/20.
  **/
 public class Compress {
     private static final String TAG = "Compress";
+    private static final String PATH = Environment.getExternalStorageDirectory() + "/Cache/image/";
     private static final String DEFAULT_DISK_CACHE_DIR = "compress_disk_cache";
-    private final RequestOptions mRequestOptions;
+
     private final Context mContext;
+    private final RequestOptions mRequestOptions;
+    private String mPath;
 
-    private String mTargetDir;
-
-    private static String getPath() {
-        String path = Environment.getExternalStorageDirectory() + "/Cache/image/";
-        File file = new File(path);
-        if (file.mkdirs()) {
-            return path;
-        }
-        return path;
-    }
-
-    public Compress(Context context, RequestOptions requestOptions) {
+    Compress(@NonNull Context context, @NonNull RequestOptions requestOptions) {
         this.mContext = context;
         this.mRequestOptions = requestOptions;
+        this.mPath = !TextUtils.isEmpty(requestOptions.path) ? requestOptions.path : PATH;
     }
 
     public void compress(@NonNull CacheListener<File> listener) {
-        this.mTargetDir = getPath();
-        File outFile = getImageCacheFile(mContext, Checker.SINGLE.extSuffix(mRequestOptions.provider));
         try {
-            File result = Checker.SINGLE.needCompress(mRequestOptions.leastCompressSize,
-                    mRequestOptions.provider.getPath()) ?
-                    new Engine(mRequestOptions.provider, outFile, mRequestOptions.focusAlpha).compress() :
-                    new File(mRequestOptions.provider.getPath());
-            listener.onSuccess(result);
-        } catch (IOException e) {
+            final File file;
+            Engine engine = new Engine(mRequestOptions.provider, mRequestOptions.options);
+            if (needCompress(mRequestOptions.leastCompressSize,
+                    mRequestOptions.provider.getPath())) {
+                ByteArrayOutputStream outputStream = engine.compress();
+                file = !TextUtils.isEmpty(mRequestOptions.name)
+                        ? getImageCustomFile(mContext, mRequestOptions.name, engine.mOptions.mimeType)
+                        : getImageCacheFile(mContext, engine.mOptions.mimeType);
+                FileOutputStream fos = new FileOutputStream(file);
+                outputStream.writeTo(fos);
+                fos.close();
+            } else {
+                file = new File(mRequestOptions.provider.getPath());
+            }
+            listener.onSuccess(file);
+        } catch (Throwable e) {
             e.printStackTrace();
             listener.onError(e);
         }
+    }
+
+    private boolean needCompress(int leastCompressSize, String path) {
+        if (leastCompressSize > 0) {
+            File source = new File(path);
+            return source.exists() && source.length() > (leastCompressSize << 10);
+        }
+        return true;
     }
 
     /**
@@ -58,36 +68,22 @@ public class Compress {
      * @param context Context.
      */
     private File getImageCacheFile(Context context, String suffix) {
-        if (TextUtils.isEmpty(mTargetDir)) {
-            mTargetDir = getImageCacheDir(context).getAbsolutePath();
+        if (TextUtils.isEmpty(getPath(mPath))) {
+            mPath = getImageCacheDir(context, DEFAULT_DISK_CACHE_DIR).getAbsolutePath();
         }
-
-        String cacheBuilder = mTargetDir + "/"
+        String cacheBuilder = mPath + "/"
                 + mRequestOptions.provider.getPath().hashCode()
                 + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
-
         return new File(cacheBuilder);
     }
 
-    private File getImageCustomFile(Context context, String filename) {
-        if (TextUtils.isEmpty(mTargetDir)) {
-            mTargetDir = getImageCacheDir(context).getAbsolutePath();
+    private File getImageCustomFile(Context context, String filename, String suffix) {
+        if (TextUtils.isEmpty(getPath(mPath))) {
+            mPath = getImageCacheDir(context, DEFAULT_DISK_CACHE_DIR).getAbsolutePath();
         }
-
-        String cacheBuilder = mTargetDir + "/" + filename;
-
+        String cacheBuilder = mPath + "/" + filename
+                + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
         return new File(cacheBuilder);
-    }
-
-    /**
-     * Returns a directory with a default name in the private cache directory of the application to
-     * use to store retrieved audio.
-     *
-     * @param context A context.
-     * @see #getImageCacheDir(Context, String)
-     */
-    private File getImageCacheDir(Context context) {
-        return getImageCacheDir(context, DEFAULT_DISK_CACHE_DIR);
     }
 
     /**
@@ -96,7 +92,6 @@ public class Compress {
      *
      * @param context   A context.
      * @param cacheName The name of the subdirectory in which to store the cache.
-     * @see #getImageCacheDir(Context)
      */
     private static File getImageCacheDir(Context context, String cacheName) {
         File cacheDir = context.getExternalCacheDir();
@@ -112,5 +107,10 @@ public class Compress {
             Log.e(TAG, "default disk cache dir is null");
         }
         return null;
+    }
+
+    private static String getPath(String path) {
+        File file = new File(path);
+        return file.exists() || file.mkdirs() ? path : "";
     }
 }

@@ -94,6 +94,7 @@ public class CompressCache extends AbstractCache<CompressCache,
         public Observe apply(@NonNull RequestOptions<Bitmap> options) {
             mRequestOptions = options;
             mRequestOptions.provider = mProvider;
+            mUri = mUri + "_" + mRequestOptions.options.toString();
             return this;
         }
 

@@ -3,12 +3,12 @@ package com.d.lib.cache.component.compress;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import com.d.lib.cache.utils.Util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -16,37 +16,123 @@ import java.io.InputStream;
  * Responsible for starting compress and managing active and cached resources.
  */
 class Engine {
-    private InputStreamProvider mProvider;
-    private File mFile;
-    private int mSrcWidth;
-    private int mSrcHeight;
-    private boolean mFocusAlpha;
+    final InputStreamProvider mProvider;
+    final BitmapOptions mRequestOptions;
+    final BitmapOptions mOptions;
 
-    Engine(InputStreamProvider provider, File file, boolean focusAlpha) throws IOException {
-        this.mFile = file;
-        this.mProvider = provider;
-        this.mFocusAlpha = focusAlpha;
+    Engine(@NonNull InputStreamProvider provider, @NonNull BitmapOptions requestOptions)
+            throws IOException {
+        mProvider = provider;
+        mRequestOptions = requestOptions;
+        mOptions = new BitmapOptions();
+        initOptions();
+    }
 
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        options.inSampleSize = 1;
+    private void initOptions() throws IOException {
         InputStream input = null;
         try {
-            input = provider.open();
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            options.inSampleSize = 1;
+            input = mProvider.open();
             BitmapFactory.decodeStream(input, null, options);
+            mOptions.mimeType = options.outMimeType.replace("image/", ".");
+            mOptions.width = options.outWidth;
+            mOptions.height = options.outHeight;
+            mOptions.degree = ImageHelper.getImageDegree(mProvider.getPath());
         } finally {
             Util.closeQuietly(input);
         }
-        this.mSrcWidth = options.outWidth;
-        this.mSrcHeight = options.outHeight;
     }
 
-    private int computeSize() {
-        mSrcWidth = mSrcWidth % 2 == 1 ? mSrcWidth + 1 : mSrcWidth;
-        mSrcHeight = mSrcHeight % 2 == 1 ? mSrcHeight + 1 : mSrcHeight;
+    ByteArrayOutputStream compress() throws IOException {
+        InputStream input = null;
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = computeSampleSize(mOptions.width, mOptions.height);
+            options.inSampleSize = (mRequestOptions.width > 0 && mRequestOptions.height > 0)
+                    ? Math.max(computeSampleSize(mOptions.width, mOptions.height,
+                    mRequestOptions.width, mRequestOptions.height), options.inSampleSize)
+                    : options.inSampleSize;
+            options.inJustDecodeBounds = false;
+            options.inDither = false;
+            options.inPurgeable = true;
+            options.inInputShareable = true;
+            options.inTempStorage = new byte[16 * 1024];
+            input = mProvider.open();
+            Bitmap bitmap = BitmapFactory.decodeStream(input, null, options);
 
-        int longSide = Math.max(mSrcWidth, mSrcHeight);
-        int shortSide = Math.min(mSrcWidth, mSrcHeight);
+            // Rotate
+            if (TextUtils.equals(".jpg", mOptions.mimeType)
+                    && mOptions.degree != 0) {
+                bitmap = rotate(bitmap, mOptions.degree);
+            }
+
+            ByteArrayOutputStream stream = qualityCompress(bitmap,
+                    mRequestOptions.format, mRequestOptions.quality, mRequestOptions.size);
+            bitmap.recycle();
+            return stream;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            Util.closeQuietly(input);
+        }
+    }
+
+    private ByteArrayOutputStream qualityCompress(Bitmap bitmap,
+                                                  Bitmap.CompressFormat format,
+                                                  int quality, int size) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(format, quality, outputStream);
+        if (size <= 0) {
+            return outputStream;
+        }
+        while (outputStream.toByteArray().length / 1024 > size && quality > 3) {
+            outputStream.reset();
+            if (quality > 6) {
+                quality -= 10;
+                quality = Math.max(6, quality);
+            } else {
+                quality -= 3;
+                quality = Math.max(3, quality);
+            }
+            bitmap.compress(format, quality, outputStream);
+        }
+        return outputStream;
+    }
+
+    private Bitmap rotate(Bitmap source, int degree) {
+        Bitmap bitmap = null;
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        try {
+            bitmap = Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+        } catch (OutOfMemoryError ignored) {
+        }
+        if (bitmap == null) {
+            bitmap = source;
+        }
+        if (source != bitmap) {
+            source.recycle();
+        }
+        return bitmap;
+    }
+
+    private int computeSampleSize(int width, int height, int maxWidth, int maxHeight) {
+        int inSampleSize = 1;
+        while (width / inSampleSize > maxWidth || height / inSampleSize > maxHeight) {
+            inSampleSize *= 2;
+        }
+        return inSampleSize;
+    }
+
+    private int computeSampleSize(int width, int height) {
+        width = width % 2 == 1 ? width + 1 : width;
+        height = height % 2 == 1 ? height + 1 : height;
+
+        int longSide = Math.max(width, height);
+        int shortSide = Math.min(width, height);
 
         float scale = ((float) shortSide / longSide);
         if (scale <= 1 && scale > 0.5625) {
@@ -64,51 +150,5 @@ class Engine {
         } else {
             return (int) Math.ceil(longSide / (1280.0 / scale));
         }
-    }
-
-    private Bitmap rotatingImage(Bitmap bitmap, int angle) {
-        Matrix matrix = new Matrix();
-
-        matrix.postRotate(angle);
-
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-    }
-
-    File compress() throws IOException {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = computeSize();
-
-        Bitmap bitmap = null;
-        InputStream input = null;
-        try {
-            input = mProvider.open();
-            bitmap = BitmapFactory.decodeStream(mProvider.open(), null, options);
-        } finally {
-            Util.closeQuietly(input);
-        }
-
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-
-        try {
-            input = mProvider.open();
-            if (Checker.SINGLE.isJPG(input)) {
-                Util.closeQuietly(input);
-                input = mProvider.open();
-                bitmap = rotatingImage(bitmap, Checker.SINGLE.getOrientation(input));
-            }
-        } finally {
-            Util.closeQuietly(input);
-        }
-
-        bitmap.compress(mFocusAlpha ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 60, stream);
-        bitmap.recycle();
-
-        FileOutputStream fos = new FileOutputStream(mFile);
-        fos.write(stream.toByteArray());
-        fos.flush();
-        fos.close();
-        stream.close();
-
-        return mFile;
     }
 }

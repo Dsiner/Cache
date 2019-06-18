@@ -103,9 +103,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 CompressCache.with(getApplicationContext())
                         .load(CompressHelper.getPath(mContext))
-                        .apply(new com.d.lib.cache.component.compress.RequestOptions()
-                                .setFocusAlpha(false)
-                                .ignoreBy(200))
+                        .apply(new com.d.lib.cache.component.compress.RequestOptions<Bitmap>()
+                                .ignoreBy(100))
                         .into(ivCompress);
 
 //                CompressCache.with(getApplicationContext())
