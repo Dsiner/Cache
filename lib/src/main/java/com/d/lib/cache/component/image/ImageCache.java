@@ -51,7 +51,7 @@ public class ImageCache extends AbstractCache<ImageCache,
         if (context == null) {
             return;
         }
-        ImageCacheManager.release();
+        ImageCacheFetcher.release();
     }
 
     public class Observe extends AbsObserve<Observe,
@@ -75,7 +75,7 @@ public class ImageCache extends AbstractCache<ImageCache,
             if (!attached(mUri)) {
                 return;
             }
-            new ImageCacheManager(getContext().getApplicationContext())
+            new ImageCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
                     .load(getContext().getApplicationContext(), mUri, new CacheListener<Bitmap>() {
                         @Override
                         public void onLoading() {
@@ -117,7 +117,8 @@ public class ImageCache extends AbstractCache<ImageCache,
             if (isFinishing()) {
                 return;
             }
-            new ImageCacheManager(getContext()).load(getContext(), mUri, l);
+            new ImageCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+                    .load(getContext().getApplicationContext(), mUri, l);
         }
     }
 }

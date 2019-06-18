@@ -7,9 +7,10 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 
-import com.d.lib.cache.base.AbstractCacheManager;
+import com.d.lib.cache.base.AbstractCacheFetcher;
 import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.LruCache;
+import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
 
 import java.io.File;
@@ -19,62 +20,45 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public class CompressBitmapCacheManager extends AbstractCacheManager<CompressBitmapCacheManager,
+public class CompressBitmapCacheFetcher extends AbstractCacheFetcher<CompressBitmapCacheFetcher,
         InputStreamProvider, Bitmap> {
     private RequestOptions mRequestOptions;
 
     private static class Singleton {
-        private volatile static LruCache<InputStreamProvider, Bitmap> LRUCACHE = new LruCache<>(12);
-        private volatile static HashMap<InputStreamProvider, ArrayList<CacheListener<Bitmap>>> HASHMAP = new HashMap<>();
+        private volatile static LruCacheMap<InputStreamProvider, Bitmap> CACHE = new LruCacheMap<>(12);
 
-        private static LruCache<InputStreamProvider, Bitmap> getLruCache() {
-            if (LRUCACHE == null) {
+        private static LruCacheMap<InputStreamProvider, Bitmap> getInstance() {
+            if (CACHE == null) {
                 synchronized (Singleton.class) {
-                    if (LRUCACHE == null) {
-                        LRUCACHE = new LruCache<>(12);
+                    if (CACHE == null) {
+                        CACHE = new LruCacheMap<>(12);
                     }
                 }
             }
-            return LRUCACHE;
-        }
-
-        private static HashMap<InputStreamProvider, ArrayList<CacheListener<Bitmap>>> getHashMap() {
-            if (HASHMAP == null) {
-                synchronized (Singleton.class) {
-                    if (HASHMAP == null) {
-                        HASHMAP = new HashMap<>();
-                    }
-                }
-            }
-            return HASHMAP;
+            return CACHE;
         }
 
         private static void release() {
-            LRUCACHE = null;
-            HASHMAP = null;
+            CACHE = null;
         }
-    }
-
-    public CompressBitmapCacheManager(Context context) {
-        super(context);
     }
 
     @Override
     public LruCache<InputStreamProvider, Bitmap> getLruCache() {
-        return Singleton.getLruCache();
+        return Singleton.getInstance().lruCache;
     }
 
     @Override
     public HashMap<InputStreamProvider, ArrayList<CacheListener<Bitmap>>> getHashMap() {
-        return Singleton.getHashMap();
+        return Singleton.getInstance().hashMap;
     }
 
-    public static void release() {
-        Singleton.release();
+    public CompressBitmapCacheFetcher(Context context, int scheduler, int observeOnScheduler) {
+        super(context, scheduler, observeOnScheduler);
     }
 
-    public CompressBitmapCacheManager setRequestOptions(RequestOptions requestOptions) {
-        this.mRequestOptions = requestOptions;
+    public CompressBitmapCacheFetcher setRequestOptions(@NonNull RequestOptions options) {
+        this.mRequestOptions = options;
         return this;
     }
 
@@ -120,5 +104,9 @@ public class CompressBitmapCacheManager extends AbstractCacheManager<CompressBit
     @Override
     protected void putDisk(InputStreamProvider url, Bitmap value) {
         aCache.put(getPreFix() + url, value);
+    }
+
+    public static void release() {
+        Singleton.release();
     }
 }

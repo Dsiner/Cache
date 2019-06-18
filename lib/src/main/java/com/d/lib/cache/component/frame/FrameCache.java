@@ -59,9 +59,7 @@ public class FrameCache extends AbstractCache<FrameCache,
             if (!attached(mUri)) {
                 return;
             }
-            new FrameCacheManager(getContext().getApplicationContext())
-                    .subscribeOn(mScheduler)
-                    .observeOn(mObserveOnScheduler)
+            new FrameCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
                     .load(getContext().getApplicationContext(), mUri, new CacheListener<FrameBean>() {
                         @Override
                         public void onLoading() {
@@ -105,10 +103,8 @@ public class FrameCache extends AbstractCache<FrameCache,
             if (isFinishing()) {
                 return;
             }
-            new FrameCacheManager(getContext())
-                    .subscribeOn(mScheduler)
-                    .observeOn(mObserveOnScheduler)
-                    .load(getContext(), mUri, l);
+            new FrameCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+                    .load(getContext().getApplicationContext(), mUri, l);
         }
     }
 
@@ -127,6 +123,6 @@ public class FrameCache extends AbstractCache<FrameCache,
         if (context == null) {
             return;
         }
-        FrameCacheManager.release();
+        FrameCacheFetcher.release();
     }
 }

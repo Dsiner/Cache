@@ -1,7 +1,7 @@
 package com.d.lib.cache.base;
 
 /**
- * Url prefix
+ * Uri prefix
  * Created by D on 2017/10/23.
  */
 public class PreFix {

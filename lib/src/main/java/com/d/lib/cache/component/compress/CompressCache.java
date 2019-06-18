@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * ImageCache
+ * CompressCache
  * Created by D on 2018/12/19.
  **/
 public class CompressCache extends AbstractCache<CompressCache,
@@ -87,12 +87,13 @@ public class CompressCache extends AbstractCache<CompressCache,
 
         Observe() {
             mRequestOptions = new RequestOptions<>();
+            mRequestOptions.provider = mProvider;
         }
 
         @Override
         public Observe apply(@NonNull RequestOptions<Bitmap> options) {
-            this.mRequestOptions = options;
-            this.mRequestOptions.provider = mProvider;
+            mRequestOptions = options;
+            mRequestOptions.provider = mProvider;
             return this;
         }
 
@@ -105,9 +106,7 @@ public class CompressCache extends AbstractCache<CompressCache,
             if (!attached(mUri)) {
                 return;
             }
-            new CompressBitmapCacheManager(getContext().getApplicationContext())
-                    .subscribeOn(mScheduler)
-                    .observeOn(mObserveOnScheduler)
+            new CompressBitmapCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
                     .setRequestOptions(mRequestOptions)
                     .load(getContext().getApplicationContext(), mRequestOptions.provider,
                             new CacheListener<Bitmap>() {
@@ -155,22 +154,18 @@ public class CompressCache extends AbstractCache<CompressCache,
             if (isFinishing()) {
                 return;
             }
-            new CompressBitmapCacheManager(getContext())
-                    .subscribeOn(mScheduler)
-                    .observeOn(mObserveOnScheduler)
+            new CompressBitmapCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
                     .setRequestOptions(mRequestOptions)
-                    .load(getContext(), mRequestOptions.provider, l);
+                    .load(getContext().getApplicationContext(), mRequestOptions.provider, l);
         }
 
         public void file(CacheListener<File> l) {
             if (isFinishing()) {
                 return;
             }
-            new CompressFileCacheManager(getContext())
-                    .subscribeOn(mScheduler)
-                    .observeOn(mObserveOnScheduler)
+            new CompressFileCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
                     .setRequestOptions(mRequestOptions)
-                    .load(getContext(), mRequestOptions.provider, l);
+                    .load(getContext().getApplicationContext(), mRequestOptions.provider, l);
         }
     }
 
@@ -189,7 +184,7 @@ public class CompressCache extends AbstractCache<CompressCache,
         if (context == null) {
             return;
         }
-        CompressFileCacheManager.release();
-        CompressBitmapCacheManager.release();
+        CompressFileCacheFetcher.release();
+        CompressBitmapCacheFetcher.release();
     }
 }

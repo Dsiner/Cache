@@ -7,9 +7,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
-import com.d.lib.cache.base.AbstractCacheManager;
+import com.d.lib.cache.base.AbstractCacheFetcher;
 import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.LruCache;
+import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
 import com.d.lib.cache.component.fetcher.BitmapHunter;
 import com.d.lib.cache.component.fetcher.DataFetcher;
@@ -24,57 +25,40 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public class ImageCacheManager extends AbstractCacheManager<ImageCacheManager,
+public class ImageCacheFetcher extends AbstractCacheFetcher<ImageCacheFetcher,
         String, Bitmap> {
 
     private static class Singleton {
-        private volatile static LruCache<String, Bitmap> LRUCACHE = new LruCache<>(12);
-        private volatile static HashMap<String, ArrayList<CacheListener<Bitmap>>> HASHMAP = new HashMap<>();
+        private volatile static LruCacheMap<String, Bitmap> CACHE = new LruCacheMap<>(12);
 
-        private static LruCache<String, Bitmap> getLruCache() {
-            if (LRUCACHE == null) {
+        private static LruCacheMap<String, Bitmap> getInstance() {
+            if (CACHE == null) {
                 synchronized (Singleton.class) {
-                    if (LRUCACHE == null) {
-                        LRUCACHE = new LruCache<>(12);
+                    if (CACHE == null) {
+                        CACHE = new LruCacheMap<>(12);
                     }
                 }
             }
-            return LRUCACHE;
-        }
-
-        private static HashMap<String, ArrayList<CacheListener<Bitmap>>> getHashMap() {
-            if (HASHMAP == null) {
-                synchronized (Singleton.class) {
-                    if (HASHMAP == null) {
-                        HASHMAP = new HashMap<>();
-                    }
-                }
-            }
-            return HASHMAP;
+            return CACHE;
         }
 
         private static void release() {
-            LRUCACHE = null;
-            HASHMAP = null;
+            CACHE = null;
         }
-    }
-
-    public ImageCacheManager(Context context) {
-        super(context);
     }
 
     @Override
     public LruCache<String, Bitmap> getLruCache() {
-        return Singleton.getLruCache();
+        return Singleton.getInstance().lruCache;
     }
 
     @Override
     public HashMap<String, ArrayList<CacheListener<Bitmap>>> getHashMap() {
-        return Singleton.getHashMap();
+        return Singleton.getInstance().hashMap;
     }
 
-    public static void release() {
-        Singleton.release();
+    public ImageCacheFetcher(Context context, int scheduler, int observeOnScheduler) {
+        super(context, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -122,5 +106,9 @@ public class ImageCacheManager extends AbstractCacheManager<ImageCacheManager,
     @Override
     protected void putDisk(String url, Bitmap value) {
         aCache.put(getPreFix() + url, value);
+    }
+
+    public static void release() {
+        Singleton.release();
     }
 }

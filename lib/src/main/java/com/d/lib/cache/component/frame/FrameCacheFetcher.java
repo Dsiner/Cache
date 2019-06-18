@@ -10,9 +10,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import com.d.lib.cache.base.AbstractCacheManager;
+import com.d.lib.cache.base.AbstractCacheFetcher;
 import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.LruCache;
+import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
 import com.d.lib.cache.utils.Util;
 
@@ -22,57 +23,40 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public class FrameCacheManager extends AbstractCacheManager<FrameCacheManager,
+public class FrameCacheFetcher extends AbstractCacheFetcher<FrameCacheFetcher,
         String, FrameBean> {
 
     private static class Singleton {
-        private volatile static LruCache<String, FrameBean> LRUCACHE = new LruCache<>(12);
-        private volatile static HashMap<String, ArrayList<CacheListener<FrameBean>>> HASHMAP = new HashMap<>();
+        private volatile static LruCacheMap<String, FrameBean> CACHE = new LruCacheMap<>(12);
 
-        private static LruCache<String, FrameBean> getLruCache() {
-            if (LRUCACHE == null) {
+        private static LruCacheMap<String, FrameBean> getInstance() {
+            if (CACHE == null) {
                 synchronized (Singleton.class) {
-                    if (LRUCACHE == null) {
-                        LRUCACHE = new LruCache<>(12);
+                    if (CACHE == null) {
+                        CACHE = new LruCacheMap<>(12);
                     }
                 }
             }
-            return LRUCACHE;
-        }
-
-        private static HashMap<String, ArrayList<CacheListener<FrameBean>>> getHashMap() {
-            if (HASHMAP == null) {
-                synchronized (Singleton.class) {
-                    if (HASHMAP == null) {
-                        HASHMAP = new HashMap<>();
-                    }
-                }
-            }
-            return HASHMAP;
+            return CACHE;
         }
 
         private static void release() {
-            LRUCACHE = null;
-            HASHMAP = null;
+            CACHE = null;
         }
-    }
-
-    public FrameCacheManager(Context context) {
-        super(context);
     }
 
     @Override
     public LruCache<String, FrameBean> getLruCache() {
-        return Singleton.getLruCache();
+        return Singleton.getInstance().lruCache;
     }
 
     @Override
     public HashMap<String, ArrayList<CacheListener<FrameBean>>> getHashMap() {
-        return Singleton.getHashMap();
+        return Singleton.getInstance().hashMap;
     }
 
-    public static void release() {
-        Singleton.release();
+    public FrameCacheFetcher(Context context, int scheduler, int observeOnScheduler) {
+        super(context, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -139,5 +123,9 @@ public class FrameCacheManager extends AbstractCacheManager<FrameCacheManager,
     protected void putDisk(String url, FrameBean value) {
         aCache.put(getPreFix() + url, value.drawable);
         aCache.put(getPreFixDuration() + url, value.duration);
+    }
+
+    public static void release() {
+        Singleton.release();
     }
 }

@@ -12,30 +12,20 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public abstract class AbstractCacheManager<R extends AbstractCacheManager, K, T> extends CacheManager {
-    protected int mScheduler;
-    protected int mObserveOnScheduler;
+public abstract class AbstractCacheFetcher<R extends AbstractCacheFetcher, K, T> extends CacheManager {
+    protected final int mScheduler;
+    protected final int mObserveOnScheduler;
 
-    protected AbstractCacheManager(Context context) {
+    protected AbstractCacheFetcher(Context context) {
         this(context, Schedulers.io(), Schedulers.mainThread());
     }
 
-    protected AbstractCacheManager(Context context,
+    protected AbstractCacheFetcher(Context context,
                                    @Schedulers.Scheduler int scheduler,
                                    @Schedulers.Scheduler int observeOnScheduler) {
         super(context);
         mScheduler = scheduler;
         mObserveOnScheduler = observeOnScheduler;
-    }
-
-    public R subscribeOn(@Schedulers.Scheduler int scheduler) {
-        this.mScheduler = scheduler;
-        return (R) this;
-    }
-
-    public R observeOn(@Schedulers.Scheduler int scheduler) {
-        this.mObserveOnScheduler = scheduler;
-        return (R) this;
     }
 
     public void load(final Context context, final K key, final CacheListener<T> listener) {

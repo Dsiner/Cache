@@ -60,10 +60,8 @@ public class DurationCache extends AbstractCache<DurationCache,
             if (!attached(mUri)) {
                 return;
             }
-            new DurationCacheManager(getContext())
-                    .subscribeOn(mScheduler)
-                    .observeOn(mObserveOnScheduler)
-                    .load(getContext(), mUri, new CacheListener<Long>() {
+            new DurationCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+                    .load(getContext().getApplicationContext(), mUri, new CacheListener<Long>() {
                         @Override
                         public void onLoading() {
                             if (isFinishing() || isDetached(mUri)) {
@@ -106,10 +104,8 @@ public class DurationCache extends AbstractCache<DurationCache,
             if (isFinishing()) {
                 return;
             }
-            new DurationCacheManager(getContext())
-                    .subscribeOn(mScheduler)
-                    .observeOn(mObserveOnScheduler)
-                    .load(getContext(), mUri, l);
+            new DurationCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+                    .load(getContext().getApplicationContext(), mUri, l);
         }
     }
 
@@ -128,6 +124,6 @@ public class DurationCache extends AbstractCache<DurationCache,
         if (context == null) {
             return;
         }
-        DurationCacheManager.release();
+        DurationCacheFetcher.release();
     }
 }
