@@ -121,10 +121,10 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
             if (!attached(mUri)) {
                 return;
             }
-            new CompressBitmapCacheFetcher(getContext(),
+            new CompressDrawableCacheFetcher(getContext(),
                     mScheduler, mObserveOnScheduler,
                     mRequestOptions)
-                    .load(getContext().getApplicationContext(), mUri, new CacheListener<Bitmap>() {
+                    .load(getContext().getApplicationContext(), mUri, new CacheListener<Drawable>() {
                         @Override
                         public void onLoading() {
                             if (isFinishing() || isDetached(mUri)) {
@@ -134,7 +134,7 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
                         }
 
                         @Override
-                        public void onSuccess(Bitmap result) {
+                        public void onSuccess(Drawable result) {
                             if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }

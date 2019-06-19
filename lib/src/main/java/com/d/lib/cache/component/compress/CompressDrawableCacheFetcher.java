@@ -77,7 +77,6 @@ public class CompressDrawableCacheFetcher extends CompressCacheFetcher<Drawable>
             public void onSuccess(File result) {
                 Bitmap bitmap = BitmapFactory.decodeFile(result.getAbsolutePath());
                 Drawable drawable = Util.bitmapToDrawableByBD(bitmap);
-                bitmap.recycle();
                 putDisk(url, drawable);
                 success(url, drawable, listener);
             }
