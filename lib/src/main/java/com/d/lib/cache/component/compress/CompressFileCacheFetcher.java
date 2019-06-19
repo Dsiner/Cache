@@ -5,7 +5,6 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 
-import com.d.lib.cache.base.AbstractCacheFetcher;
 import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
@@ -18,14 +17,12 @@ import java.util.HashMap;
 /**
  * Created by D on 2017/10/18.
  */
-public class CompressFileCacheFetcher extends AbstractCacheFetcher<CompressFileCacheFetcher,
-        InputStreamProvider, File> {
-    private RequestOptions mRequestOptions;
+public class CompressFileCacheFetcher extends CompressCacheFetcher<File> {
 
     private static class Singleton {
-        private volatile static LruCacheMap<InputStreamProvider, File> CACHE = new LruCacheMap<>(12);
+        private volatile static LruCacheMap<String, File> CACHE = new LruCacheMap<>(12);
 
-        private static LruCacheMap<InputStreamProvider, File> getInstance() {
+        private static LruCacheMap<String, File> getInstance() {
             if (CACHE == null) {
                 synchronized (Singleton.class) {
                     if (CACHE == null) {
@@ -42,22 +39,19 @@ public class CompressFileCacheFetcher extends AbstractCacheFetcher<CompressFileC
     }
 
     @Override
-    public LruCache<InputStreamProvider, File> getLruCache() {
+    public LruCache<String, File> getLruCache() {
         return Singleton.getInstance().lruCache;
     }
 
     @Override
-    public HashMap<InputStreamProvider, ArrayList<CacheListener<File>>> getHashMap() {
+    public HashMap<String, ArrayList<CacheListener<File>>> getHashMap() {
         return Singleton.getInstance().hashMap;
     }
 
-    public CompressFileCacheFetcher(Context context, int scheduler, int observeOnScheduler) {
-        super(context, scheduler, observeOnScheduler);
-    }
-
-    public CompressFileCacheFetcher setRequestOptions(RequestOptions requestOptions) {
-        this.mRequestOptions = requestOptions;
-        return this;
+    public CompressFileCacheFetcher(Context context,
+                                    int scheduler, int observeOnScheduler,
+                                    RequestOptions requestOptions) {
+        super(context, scheduler, observeOnScheduler, requestOptions);
     }
 
     @NonNull
@@ -68,9 +62,8 @@ public class CompressFileCacheFetcher extends AbstractCacheFetcher<CompressFileC
 
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
-    protected void absLoad(Context context, final InputStreamProvider url, final CacheListener<File> listener) {
-        Compress helper = new Compress(context, mRequestOptions);
-        helper.compress(new CacheListener<File>() {
+    protected void absLoad(Context context, final String url, final CacheListener<File> listener) {
+        compress(new CacheListener<File>() {
             @Override
             public void onLoading() {
 
@@ -87,16 +80,6 @@ public class CompressFileCacheFetcher extends AbstractCacheFetcher<CompressFileC
                 error(url, e, listener);
             }
         });
-    }
-
-    @Override
-    protected File getDisk(InputStreamProvider url) {
-        return null;
-    }
-
-    @Override
-    protected void putDisk(InputStreamProvider url, File value) {
-
     }
 
     public static void release() {

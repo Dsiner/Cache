@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-class ImageHelper {
+class ImageUtil {
 
     private static final String TAG = "Compress";
 

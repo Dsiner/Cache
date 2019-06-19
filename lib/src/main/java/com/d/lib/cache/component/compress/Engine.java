@@ -39,7 +39,7 @@ class Engine {
             mOptions.mimeType = options.outMimeType.replace("image/", ".");
             mOptions.width = options.outWidth;
             mOptions.height = options.outHeight;
-            mOptions.degree = ImageHelper.getImageDegree(mProvider.getPath());
+            mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
         } finally {
             Util.closeQuietly(input);
         }

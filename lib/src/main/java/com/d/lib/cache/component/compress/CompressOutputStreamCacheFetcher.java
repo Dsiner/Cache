@@ -1,8 +1,6 @@
 package com.d.lib.cache.component.compress;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
@@ -12,19 +10,22 @@ import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
  * Created by D on 2017/10/18.
  */
-public class CompressBitmapCacheFetcher extends CompressCacheFetcher<Bitmap> {
+public class CompressOutputStreamCacheFetcher extends CompressCacheFetcher<OutputStream> {
 
     private static class Singleton {
-        private volatile static LruCacheMap<String, Bitmap> CACHE = new LruCacheMap<>(12);
+        private volatile static LruCacheMap<String, OutputStream> CACHE = new LruCacheMap<>(12);
 
-        private static LruCacheMap<String, Bitmap> getInstance() {
+        private static LruCacheMap<String, OutputStream> getInstance() {
             if (CACHE == null) {
                 synchronized (Singleton.class) {
                     if (CACHE == null) {
@@ -41,18 +42,18 @@ public class CompressBitmapCacheFetcher extends CompressCacheFetcher<Bitmap> {
     }
 
     @Override
-    public LruCache<String, Bitmap> getLruCache() {
+    public LruCache<String, OutputStream> getLruCache() {
         return Singleton.getInstance().lruCache;
     }
 
     @Override
-    public HashMap<String, ArrayList<CacheListener<Bitmap>>> getHashMap() {
+    public HashMap<String, ArrayList<CacheListener<OutputStream>>> getHashMap() {
         return Singleton.getInstance().hashMap;
     }
 
-    public CompressBitmapCacheFetcher(Context context,
-                                      int scheduler, int observeOnScheduler,
-                                      RequestOptions requestOptions) {
+    public CompressOutputStreamCacheFetcher(Context context,
+                                            int scheduler, int observeOnScheduler,
+                                            RequestOptions<OutputStream> requestOptions) {
         super(context, scheduler, observeOnScheduler, requestOptions);
     }
 
@@ -64,7 +65,7 @@ public class CompressBitmapCacheFetcher extends CompressCacheFetcher<Bitmap> {
 
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
-    protected void absLoad(Context context, final String url, final CacheListener<Bitmap> listener) {
+    protected void absLoad(Context context, final String url, final CacheListener<OutputStream> listener) {
         compress(new CacheListener<File>() {
             @Override
             public void onLoading() {
@@ -73,9 +74,20 @@ public class CompressBitmapCacheFetcher extends CompressCacheFetcher<Bitmap> {
 
             @Override
             public void onSuccess(File result) {
-                Bitmap bitmap = BitmapFactory.decodeFile(result.getAbsolutePath());
-                putDisk(url, bitmap);
-                success(url, bitmap, listener);
+                try {
+                    FileInputStream fis = new FileInputStream(result);
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    byte[] b = new byte[1024];
+                    int len;
+                    while ((len = fis.read(b)) != -1) {
+                        bos.write(b, 0, len);
+                    }
+                    putDisk(url, bos);
+                    success(url, bos, listener);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                    onError(e);
+                }
             }
 
             @Override
@@ -83,20 +95,6 @@ public class CompressBitmapCacheFetcher extends CompressCacheFetcher<Bitmap> {
                 error(url, e, listener);
             }
         });
-    }
-
-    @Override
-    protected Bitmap getDisk(String url) {
-        Bitmap bitmap = aCache.getAsBitmap(getPreFix() + url);
-        if (bitmap == null) {
-            return null;
-        }
-        return bitmap;
-    }
-
-    @Override
-    protected void putDisk(String url, Bitmap value) {
-        aCache.put(getPreFix() + url, value);
     }
 
     public static void release() {

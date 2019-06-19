@@ -23,28 +23,42 @@ import java.io.InputStream;
  * CompressCache
  * Created by D on 2018/12/19.
  **/
-public class CompressCache extends AbstractCache<CompressCache,
-        CompressCache.Observe, String> {
+public class CompressCache<T> extends AbstractCache<CompressCache<T>,
+        CompressCache<T>.Observe<T>, String> {
 
     private static int TAG_ID = R.id.lib_cache_tag_compress;
 
+    private final Class<T> mTranscodeClass;
     private InputStreamProvider mProvider;
 
-    private CompressCache(Context context) {
+    private CompressCache(Context context, Class<T> transcodeClass) {
         super(context);
+        mTranscodeClass = transcodeClass;
     }
 
     @UiThread
-    public static CompressCache with(Context context) {
-        return new CompressCache(context);
+    public static CompressCache<Bitmap> with(Context context) {
+        return new CompressCache<>(context, Bitmap.class);
+    }
+
+    public CompressCache<Drawable> asDrawable() {
+        return new CompressCache<>(getContext(), Drawable.class);
+    }
+
+    public CompressCache<Bitmap> asBitmap() {
+        return new CompressCache<>(getContext(), Bitmap.class);
+    }
+
+    public CompressCache<File> asFile() {
+        return new CompressCache<>(getContext(), File.class);
     }
 
     @Override
-    public CompressCache.Observe load(@NonNull String path) {
+    public CompressCache<T>.Observe<T> load(@NonNull String path) {
         return load(new File(path));
     }
 
-    public CompressCache.Observe load(@NonNull final File file) {
+    public CompressCache<T>.Observe<T> load(@NonNull final File file) {
         mProvider = new InputStreamProvider() {
             @Override
             public String getPath() {
@@ -57,10 +71,10 @@ public class CompressCache extends AbstractCache<CompressCache,
             }
         };
         mUri = mProvider.getPath();
-        return new Observe();
+        return new Observe<>();
     }
 
-    public CompressCache.Observe load(@NonNull final Uri uri) {
+    public CompressCache<T>.Observe<T> load(@NonNull final Uri uri) {
         final Context appContext = getContext().getApplicationContext();
         mProvider = new InputStreamProvider() {
             @Override
@@ -74,11 +88,11 @@ public class CompressCache extends AbstractCache<CompressCache,
             }
         };
         mUri = mProvider.getPath();
-        return new Observe();
+        return new Observe<>();
     }
 
-    public class Observe extends AbsObserve<Observe,
-            View, Bitmap, RequestOptions<Bitmap>> {
+    public class Observe<Type> extends AbsObserve<Observe<Type>,
+            View, Type, RequestOptions<Type>> {
 
         @Override
         protected int TAG() {
@@ -91,7 +105,7 @@ public class CompressCache extends AbstractCache<CompressCache,
         }
 
         @Override
-        public Observe apply(@NonNull RequestOptions<Bitmap> options) {
+        public Observe<Type> apply(@NonNull RequestOptions<Type> options) {
             mRequestOptions = options;
             mRequestOptions.provider = mProvider;
             mUri = mUri + "_" + mRequestOptions.options.toString();
@@ -107,66 +121,67 @@ public class CompressCache extends AbstractCache<CompressCache,
             if (!attached(mUri)) {
                 return;
             }
-            new CompressBitmapCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
-                    .setRequestOptions(mRequestOptions)
-                    .load(getContext().getApplicationContext(), mRequestOptions.provider,
-                            new CacheListener<Bitmap>() {
-                                @Override
-                                public void onLoading() {
-                                    if (isFinishing() || isDetached(mUri)) {
-                                        return;
-                                    }
-                                    setTarget(mRequestOptions.placeHolder);
-                                }
+            new CompressBitmapCacheFetcher(getContext(),
+                    mScheduler, mObserveOnScheduler,
+                    mRequestOptions)
+                    .load(getContext().getApplicationContext(), mUri, new CacheListener<Bitmap>() {
+                        @Override
+                        public void onLoading() {
+                            if (isFinishing() || isDetached(mUri)) {
+                                return;
+                            }
+                            setTarget(mRequestOptions.placeHolder);
+                        }
 
-                                @Override
-                                public void onSuccess(Bitmap result) {
-                                    if (isFinishing() || isDetached(mUri)) {
-                                        return;
-                                    }
-                                    setTarget(result);
-                                }
+                        @Override
+                        public void onSuccess(Bitmap result) {
+                            if (isFinishing() || isDetached(mUri)) {
+                                return;
+                            }
+                            setTarget(result);
+                        }
 
-                                @Override
-                                public void onError(Throwable e) {
-                                    if (isFinishing() || isDetached(mUri)) {
-                                        return;
-                                    }
-                                    setTarget(mRequestOptions.error);
-                                }
+                        @Override
+                        public void onError(Throwable e) {
+                            if (isFinishing() || isDetached(mUri)) {
+                                return;
+                            }
+                            setTarget(mRequestOptions.error);
+                        }
 
-                                private void setTarget(Object result) {
-                                    if (result == null) {
-                                        return;
-                                    }
-                                    if (getTarget() instanceof ImageView) {
-                                        if (result instanceof Bitmap) {
-                                            ((ImageView) getTarget()).setImageBitmap((Bitmap) result);
-                                        } else if (result instanceof Drawable) {
-                                            ((ImageView) getTarget()).setImageDrawable((Drawable) result);
-                                        }
-                                    }
+                        private void setTarget(Object result) {
+                            if (result == null) {
+                                return;
+                            }
+                            if (getTarget() instanceof ImageView) {
+                                if (result instanceof Bitmap) {
+                                    ((ImageView) getTarget()).setImageBitmap((Bitmap) result);
+                                } else if (result instanceof Drawable) {
+                                    ((ImageView) getTarget()).setImageDrawable((Drawable) result);
                                 }
-                            });
+                            }
+                        }
+                    });
         }
 
         @Override
-        public void listener(CacheListener<Bitmap> l) {
+        public void listener(CacheListener<Type> l) {
             if (isFinishing()) {
                 return;
             }
-            new CompressBitmapCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
-                    .setRequestOptions(mRequestOptions)
-                    .load(getContext().getApplicationContext(), mRequestOptions.provider, l);
-        }
-
-        public void file(CacheListener<File> l) {
-            if (isFinishing()) {
-                return;
+            if (mTranscodeClass.equals(Drawable.class)) {
+                new CompressDrawableCacheFetcher(getContext(), mScheduler, mObserveOnScheduler,
+                        mRequestOptions)
+                        .load(getContext().getApplicationContext(), mUri, (CacheListener<Drawable>) l);
+            } else if (mTranscodeClass.equals(Bitmap.class)) {
+                new CompressBitmapCacheFetcher(getContext(), mScheduler, mObserveOnScheduler,
+                        mRequestOptions)
+                        .load(getContext().getApplicationContext(), mUri, (CacheListener<Bitmap>) l);
+            } else if (mTranscodeClass.equals(File.class)) {
+                new CompressFileCacheFetcher(getContext(), mScheduler, mObserveOnScheduler,
+                        mRequestOptions)
+                        .load(getContext().getApplicationContext(), mUri, (CacheListener<File>) l);
             }
-            new CompressFileCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
-                    .setRequestOptions(mRequestOptions)
-                    .load(getContext().getApplicationContext(), mRequestOptions.provider, l);
         }
     }
 
