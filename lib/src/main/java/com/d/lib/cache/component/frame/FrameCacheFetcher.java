@@ -2,6 +2,7 @@ package com.d.lib.cache.component.frame;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
@@ -12,13 +13,15 @@ import android.util.Log;
 
 import com.d.lib.cache.base.AbstractCacheFetcher;
 import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.DiskCacheStrategies;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
-import com.d.lib.cache.utils.Util;
+import com.d.lib.cache.base.RequestOptions;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by D on 2017/10/18.
@@ -47,16 +50,19 @@ public class FrameCacheFetcher extends AbstractCacheFetcher<FrameCacheFetcher,
 
     @Override
     public LruCache<String, FrameBean> getLruCache() {
-        return Singleton.getInstance().lruCache;
+        return Singleton.getInstance().mLruCache;
     }
 
     @Override
-    public HashMap<String, ArrayList<CacheListener<FrameBean>>> getHashMap() {
-        return Singleton.getInstance().hashMap;
+    public HashMap<String, List<CacheListener<FrameBean>>> getHashMap() {
+        return Singleton.getInstance().mHashMap;
     }
 
-    public FrameCacheFetcher(Context context, int scheduler, int observeOnScheduler) {
-        super(context, scheduler, observeOnScheduler);
+    public FrameCacheFetcher(@NonNull Context context,
+                             @NonNull RequestOptions requestOptions,
+                             @Schedulers.Scheduler int scheduler,
+                             @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -89,9 +95,8 @@ public class FrameCacheFetcher extends AbstractCacheFetcher<FrameCacheFetcher,
             Bitmap bitmap = mmr.getFrameAtTime();
             // Get duration(milliseconds)
             long duration = Long.parseLong(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-            FrameBean frameBean = new FrameBean();
-            frameBean.drawable = Util.bitmapToDrawableByBD(bitmap);
-            frameBean.duration = duration;
+            FrameBean frameBean = new FrameBean(bitmap != null ? new BitmapDrawable(bitmap) : null,
+                    duration, null);
             // Save to disk
             putDisk(url, frameBean);
             success(url, frameBean, listener);
@@ -108,21 +113,24 @@ public class FrameCacheFetcher extends AbstractCacheFetcher<FrameCacheFetcher,
 
     @Override
     protected FrameBean getDisk(String url) {
-        Drawable drawable = aCache.getAsDrawable(getPreFix() + url);
-        Long duration = (Long) aCache.getAsObject(getPreFixDuration() + url);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return null;
+        }
+        Drawable drawable = A_CACHE.getAsDrawable(getPreFix() + url);
+        Long duration = (Long) A_CACHE.getAsObject(getPreFixDuration() + url);
         if (drawable == null || duration == null) {
             return null;
         }
-        FrameBean value = new FrameBean();
-        value.drawable = drawable;
-        value.duration = duration;
-        return value;
+        return new FrameBean(drawable, duration, null);
     }
 
     @Override
     protected void putDisk(String url, FrameBean value) {
-        aCache.put(getPreFix() + url, value.drawable);
-        aCache.put(getPreFixDuration() + url, value.duration);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return;
+        }
+        A_CACHE.put(getPreFix() + url, value.drawable);
+        A_CACHE.put(getPreFixDuration() + url, value.duration);
     }
 
     public static void release() {

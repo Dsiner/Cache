@@ -1,9 +1,9 @@
 package com.d.lib.cache.component.fetcher;
 
+import android.accounts.NetworkErrorException;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.utils.Preconditions;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class HttpStreamFetcher implements DataFetcher<InputStream> {
             stream = ContentLengthInputStream.obtain(inputStream, contentLength);
             callback.onDataReady(stream);
         } else {
-            callback.onLoadFailed(new CacheException(message + " Code: " + code));
+            callback.onLoadFailed(new NetworkErrorException(message + " Code: " + code));
         }
     }
 

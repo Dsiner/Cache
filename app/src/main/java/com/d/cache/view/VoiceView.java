@@ -5,6 +5,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
+import com.d.lib.cache.component.duration.DurationCache;
 import com.d.lib.cache.component.duration.IDuration;
 import com.d.lib.cache.utils.Util;
 
@@ -27,6 +28,6 @@ public class VoiceView extends TextView implements IDuration {
 
     @Override
     public void setDuration(Long duration) {
-        setText("Duration：" + Util.formatTime(duration));
+        setText("Duration：" + DurationCache.formatTime(duration));
     }
 }

@@ -1,9 +1,9 @@
 package com.d.lib.cache.component.fetcher;
 
+import android.accounts.NetworkErrorException;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.d.lib.cache.base.CacheException;
 import com.d.lib.cache.utils.Preconditions;
 
 import java.io.IOException;
@@ -77,7 +77,7 @@ public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Ca
             stream = ContentLengthInputStream.obtain(responseBody.byteStream(), contentLength);
             callback.onDataReady(stream);
         } else {
-            callback.onLoadFailed(new CacheException(response.message() + " Code: " + response.code()));
+            callback.onLoadFailed(new NetworkErrorException(response.message() + " Code: " + response.code()));
         }
     }
 

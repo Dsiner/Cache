@@ -13,7 +13,9 @@ import com.d.lib.cache.R;
 import com.d.lib.cache.base.AbsObserve;
 import com.d.lib.cache.base.AbstractCache;
 import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.DiskCacheStrategies;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,12 +55,16 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
         return new CompressCache<>(getContext(), File.class);
     }
 
+    public CompressCache<ByteArrayOutputStream> asOutputStream() {
+        return new CompressCache<>(getContext(), ByteArrayOutputStream.class);
+    }
+
     @Override
-    public CompressCache<T>.Observe<T> load(@NonNull String path) {
+    public Observe<T> load(@NonNull String path) {
         return load(new File(path));
     }
 
-    public CompressCache<T>.Observe<T> load(@NonNull final File file) {
+    public Observe<T> load(@NonNull final File file) {
         mProvider = new InputStreamProvider() {
             @Override
             public String getPath() {
@@ -74,7 +80,7 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
         return new Observe<>();
     }
 
-    public CompressCache<T>.Observe<T> load(@NonNull final Uri uri) {
+    public Observe<T> load(@NonNull final Uri uri) {
         final Context appContext = getContext().getApplicationContext();
         mProvider = new InputStreamProvider() {
             @Override
@@ -92,7 +98,7 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
     }
 
     public class Observe<Type> extends AbsObserve<Observe<Type>,
-            View, Type, RequestOptions<Type>> {
+            View, Type, CompressOptions<Type>> {
 
         @Override
         protected int TAG() {
@@ -100,12 +106,16 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
         }
 
         Observe() {
-            mRequestOptions = new RequestOptions<>();
+            mRequestOptions = new CompressOptions<>();
             mRequestOptions.provider = mProvider;
+            if (mTranscodeClass.equals(ByteArrayOutputStream.class)) {
+                mRequestOptions.skipMemoryCache(true);
+                mRequestOptions.diskCacheStrategy(DiskCacheStrategies.NONE);
+            }
         }
 
         @Override
-        public Observe<Type> apply(@NonNull RequestOptions<Type> options) {
+        public Observe<Type> apply(@NonNull CompressOptions<Type> options) {
             mRequestOptions = options;
             mRequestOptions.provider = mProvider;
             mUri = mUri + "_" + mRequestOptions.options.toString();
@@ -121,10 +131,10 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
             if (!attached(mUri)) {
                 return;
             }
-            new CompressDrawableCacheFetcher(getContext(),
-                    mScheduler, mObserveOnScheduler,
-                    mRequestOptions)
-                    .load(getContext().getApplicationContext(), mUri, new CacheListener<Drawable>() {
+            new CompressBitmapCacheFetcher(getContext(),
+                    mRequestOptions,
+                    mScheduler, mObserveOnScheduler)
+                    .load(getContext().getApplicationContext(), mUri, new CacheListener<Bitmap>() {
                         @Override
                         public void onLoading() {
                             if (isFinishing() || isDetached(mUri)) {
@@ -134,7 +144,7 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
                         }
 
                         @Override
-                        public void onSuccess(Drawable result) {
+                        public void onSuccess(Bitmap result) {
                             if (isFinishing() || isDetached(mUri)) {
                                 return;
                             }
@@ -170,17 +180,17 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
                 return;
             }
             if (mTranscodeClass.equals(Drawable.class)) {
-                new CompressDrawableCacheFetcher(getContext(), mScheduler, mObserveOnScheduler,
-                        mRequestOptions)
+                new CompressDrawableCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                         .load(getContext().getApplicationContext(), mUri, (CacheListener<Drawable>) l);
             } else if (mTranscodeClass.equals(Bitmap.class)) {
-                new CompressBitmapCacheFetcher(getContext(), mScheduler, mObserveOnScheduler,
-                        mRequestOptions)
+                new CompressBitmapCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                         .load(getContext().getApplicationContext(), mUri, (CacheListener<Bitmap>) l);
             } else if (mTranscodeClass.equals(File.class)) {
-                new CompressFileCacheFetcher(getContext(), mScheduler, mObserveOnScheduler,
-                        mRequestOptions)
+                new CompressFileCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                         .load(getContext().getApplicationContext(), mUri, (CacheListener<File>) l);
+            } else if (mTranscodeClass.equals(ByteArrayOutputStream.class)) {
+                new CompressOutputStreamCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
+                        .load(getContext().getApplicationContext(), mUri, (CacheListener<ByteArrayOutputStream>) l);
             }
         }
     }

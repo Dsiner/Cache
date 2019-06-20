@@ -1,5 +1,7 @@
 package com.d.lib.cache.base;
 
+import android.support.annotation.IntRange;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -15,12 +17,12 @@ public class LruCache<K, V> {
         this(12);
     }
 
-    public LruCache(int count) {
+    public LruCache(@IntRange(from = 0) int count) {
         this.mMap = new LinkedHashMap<>();
         this.mCount = count;
     }
 
-    public void setCount(int count) {
+    public void setCount(@IntRange(from = 0) int count) {
         this.mCount = count;
     }
 
@@ -48,6 +50,9 @@ public class LruCache<K, V> {
     }
 
     private void calculateSize(K key) {
+        if (mMap.size() <= 0 || mCount <= 0) {
+            return;
+        }
         if (mMap.size() >= mCount && !mMap.containsKey(key)) {
             Iterator ite = mMap.entrySet().iterator();
             if (ite.hasNext()) {

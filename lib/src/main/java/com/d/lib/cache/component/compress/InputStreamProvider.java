@@ -15,7 +15,7 @@ public abstract class InputStreamProvider {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj != null && obj instanceof InputStreamProvider) {
+        if (obj instanceof InputStreamProvider) {
             return TextUtils.equals(getPath(), ((InputStreamProvider) obj).getPath());
         }
         return super.equals(obj);

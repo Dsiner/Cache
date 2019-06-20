@@ -1,14 +1,14 @@
 package com.d.lib.cache.base;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class LruCacheMap<K, V> {
-    public final LruCache<K, V> lruCache;
-    public final HashMap<K, ArrayList<CacheListener<V>>> hashMap;
+    public final LruCache<K, V> mLruCache;
+    public final HashMap<K, List<CacheListener<V>>> mHashMap;
 
     public LruCacheMap(int count) {
-        lruCache = new LruCache<>(count);
-        hashMap = new HashMap<>();
+        mLruCache = new LruCache<>(count);
+        mHashMap = new HashMap<>();
     }
 }

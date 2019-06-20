@@ -9,18 +9,21 @@ import android.support.annotation.RequiresApi;
 
 import com.d.lib.cache.base.AbstractCacheFetcher;
 import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.DiskCacheStrategies;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
+import com.d.lib.cache.base.RequestOptions;
 import com.d.lib.cache.component.fetcher.BitmapHunter;
 import com.d.lib.cache.component.fetcher.DataFetcher;
 import com.d.lib.cache.component.fetcher.HttpStreamFetcher;
 import com.d.lib.cache.component.fetcher.Priority;
 import com.d.lib.cache.component.fetcher.Request;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by D on 2017/10/18.
@@ -49,16 +52,19 @@ public class ImageCacheFetcher extends AbstractCacheFetcher<ImageCacheFetcher,
 
     @Override
     public LruCache<String, Bitmap> getLruCache() {
-        return Singleton.getInstance().lruCache;
+        return Singleton.getInstance().mLruCache;
     }
 
     @Override
-    public HashMap<String, ArrayList<CacheListener<Bitmap>>> getHashMap() {
-        return Singleton.getInstance().hashMap;
+    public HashMap<String, List<CacheListener<Bitmap>>> getHashMap() {
+        return Singleton.getInstance().mHashMap;
     }
 
-    public ImageCacheFetcher(Context context, int scheduler, int observeOnScheduler) {
-        super(context, scheduler, observeOnScheduler);
+    public ImageCacheFetcher(@NonNull Context context,
+                             @NonNull RequestOptions requestOptions,
+                             @Schedulers.Scheduler int scheduler,
+                             @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -96,7 +102,10 @@ public class ImageCacheFetcher extends AbstractCacheFetcher<ImageCacheFetcher,
 
     @Override
     protected Bitmap getDisk(String url) {
-        Bitmap bitmap = aCache.getAsBitmap(getPreFix() + url);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return null;
+        }
+        Bitmap bitmap = A_CACHE.getAsBitmap(getPreFix() + url);
         if (bitmap == null) {
             return null;
         }
@@ -105,7 +114,10 @@ public class ImageCacheFetcher extends AbstractCacheFetcher<ImageCacheFetcher,
 
     @Override
     protected void putDisk(String url, Bitmap value) {
-        aCache.put(getPreFix() + url, value);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return;
+        }
+        A_CACHE.put(getPreFix() + url, value);
     }
 
     public static void release() {

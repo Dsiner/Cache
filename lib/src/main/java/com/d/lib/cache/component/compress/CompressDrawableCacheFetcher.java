@@ -3,20 +3,22 @@ package com.d.lib.cache.component.compress;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 
 import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.DiskCacheStrategies;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
-import com.d.lib.cache.utils.Util;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by D on 2017/10/18.
@@ -44,18 +46,19 @@ public class CompressDrawableCacheFetcher extends CompressCacheFetcher<Drawable>
 
     @Override
     public LruCache<String, Drawable> getLruCache() {
-        return Singleton.getInstance().lruCache;
+        return Singleton.getInstance().mLruCache;
     }
 
     @Override
-    public HashMap<String, ArrayList<CacheListener<Drawable>>> getHashMap() {
-        return Singleton.getInstance().hashMap;
+    public HashMap<String, List<CacheListener<Drawable>>> getHashMap() {
+        return Singleton.getInstance().mHashMap;
     }
 
-    public CompressDrawableCacheFetcher(Context context,
-                                        int scheduler, int observeOnScheduler,
-                                        RequestOptions requestOptions) {
-        super(context, scheduler, observeOnScheduler, requestOptions);
+    public CompressDrawableCacheFetcher(@NonNull Context context,
+                                        @NonNull CompressOptions requestOptions,
+                                        @Schedulers.Scheduler int scheduler,
+                                        @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -67,30 +70,24 @@ public class CompressDrawableCacheFetcher extends CompressCacheFetcher<Drawable>
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
     protected void absLoad(Context context, final String url, final CacheListener<Drawable> listener) {
-        compress(new CacheListener<File>() {
-            @Override
-            public void onLoading() {
-
-            }
-
-            @Override
-            public void onSuccess(File result) {
-                Bitmap bitmap = BitmapFactory.decodeFile(result.getAbsolutePath());
-                Drawable drawable = Util.bitmapToDrawableByBD(bitmap);
-                putDisk(url, drawable);
-                success(url, drawable, listener);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                error(url, e, listener);
-            }
-        });
+        try {
+            File result = needCompress() ? compressFile() : new File(mCompressOptions.provider.getPath());
+            Bitmap bitmap = BitmapFactory.decodeFile(result.getAbsolutePath());
+            Drawable drawable = bitmap != null ? new BitmapDrawable(bitmap) : null;
+            putDisk(url, drawable);
+            success(url, drawable, listener);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            error(url, e, listener);
+        }
     }
 
     @Override
     protected Drawable getDisk(String url) {
-        Drawable drawable = aCache.getAsDrawable(getPreFix() + url);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return null;
+        }
+        Drawable drawable = A_CACHE.getAsDrawable(getPreFix() + url);
         if (drawable == null) {
             return null;
         }
@@ -99,7 +96,10 @@ public class CompressDrawableCacheFetcher extends CompressCacheFetcher<Drawable>
 
     @Override
     protected void putDisk(String url, Drawable value) {
-        aCache.put(getPreFix() + url, value);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return;
+        }
+        A_CACHE.put(getPreFix() + url, value);
     }
 
     public static void release() {

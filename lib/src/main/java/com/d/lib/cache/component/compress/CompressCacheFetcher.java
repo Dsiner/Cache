@@ -1,17 +1,20 @@
 package com.d.lib.cache.component.compress;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.d.lib.cache.base.AbstractCacheFetcher;
-import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by D on 2017/10/18.
@@ -23,43 +26,55 @@ public abstract class CompressCacheFetcher<T>
     private static final String DEFAULT_DISK_CACHE_DIR = "compress_disk_cache";
 
     protected final Context mContext;
-    protected final RequestOptions mRequestOptions;
+    protected final CompressOptions mCompressOptions;
     protected String mPath;
 
-    public CompressCacheFetcher(Context context,
-                                int scheduler, int observeOnScheduler,
-                                RequestOptions requestOptions) {
-        super(context, scheduler, observeOnScheduler);
+    public CompressCacheFetcher(@NonNull Context context,
+                                @NonNull CompressOptions requestOptions,
+                                @Schedulers.Scheduler int scheduler,
+                                @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
         mContext = context.getApplicationContext();
-        mRequestOptions = requestOptions;
+        mCompressOptions = requestOptions;
         mPath = !TextUtils.isEmpty(requestOptions.path) ? requestOptions.path : PATH;
     }
 
-    public void compress(@NonNull CacheListener<File> listener) {
-        try {
-            final File file;
-            if (needCompress()) {
-                Engine engine = new Engine(mRequestOptions.provider, mRequestOptions.options);
-                ByteArrayOutputStream outputStream = engine.compress();
-                file = !TextUtils.isEmpty(mRequestOptions.name)
-                        ? getImageCustomFile(mContext, mRequestOptions.name, engine.mOptions.mimeType)
-                        : getImageCacheFile(mContext, engine.mOptions.mimeType);
-                FileOutputStream fos = new FileOutputStream(file);
-                outputStream.writeTo(fos);
-                fos.close();
-            } else {
-                file = new File(mRequestOptions.provider.getPath());
-            }
-            listener.onSuccess(file);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            listener.onError(e);
-        }
+    public ByteArrayOutputStream compress() throws Exception {
+        Engine engine = new Engine(mCompressOptions.provider, mCompressOptions.options);
+        return engine.compress();
     }
 
-    private boolean needCompress() {
-        int leastCompressSize = mRequestOptions.leastCompressSize;
-        String path = mRequestOptions.provider.getPath();
+    public File compressFile() throws Exception {
+        Engine engine = new Engine(mCompressOptions.provider, mCompressOptions.options);
+        ByteArrayOutputStream outputStream = engine.compress();
+        return convert(engine.mOptions.format, outputStream);
+    }
+
+    protected ByteArrayOutputStream convert(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream outputStream;
+        outputStream = new ByteArrayOutputStream();
+        byte[] b = new byte[1024];
+        int len;
+        while ((len = inputStream.read(b)) != -1) {
+            outputStream.write(b, 0, len);
+        }
+        return outputStream;
+    }
+
+    protected File convert(Bitmap.CompressFormat format, ByteArrayOutputStream outputStream) throws IOException {
+        String mimeType = BitmapOptions.mimeType(format);
+        File file = !TextUtils.isEmpty(mCompressOptions.name)
+                ? getImageCustomFile(mContext, mCompressOptions.name, mimeType)
+                : getImageCacheFile(mContext, mimeType);
+        FileOutputStream fos = new FileOutputStream(file);
+        outputStream.writeTo(fos);
+        fos.close();
+        return file;
+    }
+
+    protected boolean needCompress() {
+        int leastCompressSize = mCompressOptions.leastCompressSize;
+        String path = mCompressOptions.provider.getPath();
         if (leastCompressSize > 0) {
             File source = new File(path);
             return source.exists() && source.length() > (leastCompressSize << 10);
@@ -77,7 +92,7 @@ public abstract class CompressCacheFetcher<T>
             mPath = getImageCacheDir(context, DEFAULT_DISK_CACHE_DIR).getAbsolutePath();
         }
         String cacheBuilder = mPath + "/"
-                + mRequestOptions.provider.getPath().hashCode()
+                + mCompressOptions.provider.getPath().hashCode()
                 + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
         return new File(cacheBuilder);
     }

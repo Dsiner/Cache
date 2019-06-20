@@ -2,6 +2,7 @@ package com.d.lib.cache.component.image;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.view.View;
 import android.widget.ImageView;
@@ -67,6 +68,12 @@ public class ImageCache extends AbstractCache<ImageCache,
         }
 
         @Override
+        public Observe apply(@NonNull RequestOptions<Bitmap> options) {
+            mRequestOptions = options;
+            return this;
+        }
+
+        @Override
         public void into(View view) {
             if (isFinishing() || view == null) {
                 return;
@@ -75,7 +82,7 @@ public class ImageCache extends AbstractCache<ImageCache,
             if (!attached(mUri)) {
                 return;
             }
-            new ImageCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+            new ImageCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                     .load(getContext().getApplicationContext(), mUri, new CacheListener<Bitmap>() {
                         @Override
                         public void onLoading() {
@@ -117,7 +124,7 @@ public class ImageCache extends AbstractCache<ImageCache,
             if (isFinishing()) {
                 return;
             }
-            new ImageCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+            new ImageCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                     .load(getContext().getApplicationContext(), mUri, l);
         }
     }

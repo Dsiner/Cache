@@ -9,10 +9,11 @@ import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by D on 2017/10/18.
@@ -40,18 +41,19 @@ public class CompressFileCacheFetcher extends CompressCacheFetcher<File> {
 
     @Override
     public LruCache<String, File> getLruCache() {
-        return Singleton.getInstance().lruCache;
+        return Singleton.getInstance().mLruCache;
     }
 
     @Override
-    public HashMap<String, ArrayList<CacheListener<File>>> getHashMap() {
-        return Singleton.getInstance().hashMap;
+    public HashMap<String, List<CacheListener<File>>> getHashMap() {
+        return Singleton.getInstance().mHashMap;
     }
 
-    public CompressFileCacheFetcher(Context context,
-                                    int scheduler, int observeOnScheduler,
-                                    RequestOptions requestOptions) {
-        super(context, scheduler, observeOnScheduler, requestOptions);
+    public CompressFileCacheFetcher(@NonNull Context context,
+                                    @NonNull CompressOptions requestOptions,
+                                    @Schedulers.Scheduler int scheduler,
+                                    @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -63,23 +65,14 @@ public class CompressFileCacheFetcher extends CompressCacheFetcher<File> {
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
     protected void absLoad(Context context, final String url, final CacheListener<File> listener) {
-        compress(new CacheListener<File>() {
-            @Override
-            public void onLoading() {
-
-            }
-
-            @Override
-            public void onSuccess(File result) {
-                putDisk(url, result);
-                success(url, result, listener);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                error(url, e, listener);
-            }
-        });
+        try {
+            File result = needCompress() ? compressFile() : new File(mCompressOptions.provider.getPath());
+            putDisk(url, result);
+            success(url, result, listener);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            error(url, e, listener);
+        }
     }
 
     public static void release() {

@@ -4,9 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
-
-import com.d.lib.cache.utils.Util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,12 +33,12 @@ class Engine {
             options.inSampleSize = 1;
             input = mProvider.open();
             BitmapFactory.decodeStream(input, null, options);
-            mOptions.mimeType = options.outMimeType.replace("image/", ".");
+            mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
             mOptions.width = options.outWidth;
             mOptions.height = options.outHeight;
             mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
         } finally {
-            Util.closeQuietly(input);
+            ImageUtil.closeQuietly(input);
         }
     }
 
@@ -63,7 +60,7 @@ class Engine {
             Bitmap bitmap = BitmapFactory.decodeStream(input, null, options);
 
             // Rotate
-            if (TextUtils.equals(".jpg", mOptions.mimeType)
+            if (Bitmap.CompressFormat.JPEG == mOptions.format
                     && mOptions.degree != 0) {
                 bitmap = rotate(bitmap, mOptions.degree);
             }
@@ -76,7 +73,7 @@ class Engine {
             e.printStackTrace();
             throw e;
         } finally {
-            Util.closeQuietly(input);
+            ImageUtil.closeQuietly(input);
         }
     }
 
@@ -88,7 +85,7 @@ class Engine {
         if (size <= 0) {
             return outputStream;
         }
-        while (outputStream.toByteArray().length / 1024 > size && quality > 3) {
+        while (outputStream.size() / 1024 > size && quality > 3) {
             outputStream.reset();
             if (quality > 6) {
                 quality -= 10;

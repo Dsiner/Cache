@@ -1,22 +1,23 @@
 package com.d.lib.cache.base;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 /**
  * Created by D on 2017/10/18.
  */
 public class CacheManager {
-    protected volatile static ACache aCache;
+    protected volatile static ACache A_CACHE;
 
-    protected CacheManager(Context context) {
+    protected CacheManager(@NonNull Context context) {
         init(context.getApplicationContext());
     }
 
     private void init(Context context) {
-        if (aCache == null) {
+        if (A_CACHE == null) {
             synchronized (CacheManager.class) {
-                if (aCache == null) {
-                    aCache = ACache.get(context);
+                if (A_CACHE == null) {
+                    A_CACHE = ACache.get(context);
                 }
             }
         }

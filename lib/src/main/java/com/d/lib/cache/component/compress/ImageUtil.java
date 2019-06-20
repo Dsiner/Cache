@@ -3,14 +3,13 @@ package com.d.lib.cache.component.compress;
 import android.media.ExifInterface;
 import android.util.Log;
 
-import com.d.lib.cache.utils.Util;
-
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-class ImageUtil {
+public class ImageUtil {
 
     private static final String TAG = "Compress";
 
@@ -40,7 +39,7 @@ class ImageUtil {
         } catch (Exception e) {
             return false;
         } finally {
-            Util.closeQuietly(buffer);
+            closeQuietly(buffer);
         }
         return isJPG(data);
     }
@@ -221,5 +220,20 @@ class ImageUtil {
         }
 
         return buffer.toByteArray();
+    }
+
+    /**
+     * Closes {@code closeable}, ignoring any checked exceptions. Does nothing if {@code closeable} is
+     * null.
+     */
+    public static void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (RuntimeException rethrown) {
+                throw rethrown;
+            } catch (Exception ignored) {
+            }
+        }
     }
 }

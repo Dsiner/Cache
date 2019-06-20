@@ -3,11 +3,13 @@ package com.d.lib.cache.component.compress;
 import android.graphics.Bitmap;
 import android.support.annotation.Nullable;
 
+import com.d.lib.cache.base.RequestOptions;
+
 /**
  * RequestOptions
  * Created by D on 2018/12/20.
  **/
-public class RequestOptions<T> extends com.d.lib.cache.base.RequestOptions<T> {
+public class CompressOptions<T> extends RequestOptions<T> {
     InputStreamProvider provider;
 
     final BitmapOptions options = new BitmapOptions();
@@ -16,13 +18,13 @@ public class RequestOptions<T> extends com.d.lib.cache.base.RequestOptions<T> {
     String name;
 
     @Override
-    public RequestOptions<T> placeholder(@Nullable T placeholder) {
-        return (RequestOptions<T>) super.placeholder(placeholder);
+    public CompressOptions<T> placeholder(@Nullable T placeholder) {
+        return (CompressOptions<T>) super.placeholder(placeholder);
     }
 
     @Override
-    public RequestOptions<T> error(@Nullable T error) {
-        return (RequestOptions<T>) super.error(error);
+    public CompressOptions<T> error(@Nullable T error) {
+        return (CompressOptions<T>) super.error(error);
     }
 
     /**
@@ -30,33 +32,33 @@ public class RequestOptions<T> extends com.d.lib.cache.base.RequestOptions<T> {
      *
      * @param size The value of file size, unit KB, default 100K
      */
-    public RequestOptions<T> ignoreBy(int size) {
+    public CompressOptions<T> ignoreBy(int size) {
         this.leastCompressSize = size;
         return this;
     }
 
-    public RequestOptions<T> setPath(String path, String name) {
+    public CompressOptions<T> setPath(String path, String name) {
         this.path = path;
         this.name = name;
         return this;
     }
 
-    public RequestOptions<T> setFormat(Bitmap.CompressFormat format) {
+    public CompressOptions<T> setFormat(Bitmap.CompressFormat format) {
         this.options.format = format;
         return this;
     }
 
-    public RequestOptions<T> setMaxWidth(int size) {
+    public CompressOptions<T> setMaxWidth(int size) {
         this.options.width = size;
         return this;
     }
 
-    public RequestOptions<T> setMaxHeight(int size) {
+    public CompressOptions<T> setMaxHeight(int size) {
         this.options.height = size;
         return this;
     }
 
-    public RequestOptions<T> setQuality(int quality) {
+    public CompressOptions<T> setQuality(int quality) {
         this.options.quality = quality;
         return this;
     }
@@ -66,7 +68,7 @@ public class RequestOptions<T> extends com.d.lib.cache.base.RequestOptions<T> {
      *
      * @param size The value of file size, unit KB
      */
-    public RequestOptions<T> setMaxSize(int size) {
+    public CompressOptions<T> setMaxSize(int size) {
         this.options.size = size;
         return this;
     }

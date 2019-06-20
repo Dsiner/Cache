@@ -2,6 +2,7 @@ package com.d.lib.cache.component.frame;
 
 import android.content.Context;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.UiThread;
 import android.view.View;
@@ -51,6 +52,12 @@ public class FrameCache extends AbstractCache<FrameCache,
         }
 
         @Override
+        public Observe apply(@NonNull RequestOptions<FrameBean> options) {
+            mRequestOptions = options;
+            return this;
+        }
+
+        @Override
         public void into(View view) {
             if (isFinishing() || view == null) {
                 return;
@@ -59,7 +66,7 @@ public class FrameCache extends AbstractCache<FrameCache,
             if (!attached(mUri)) {
                 return;
             }
-            new FrameCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+            new FrameCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                     .load(getContext().getApplicationContext(), mUri, new CacheListener<FrameBean>() {
                         @Override
                         public void onLoading() {
@@ -103,9 +110,31 @@ public class FrameCache extends AbstractCache<FrameCache,
             if (isFinishing()) {
                 return;
             }
-            new FrameCacheFetcher(getContext(), mScheduler, mObserveOnScheduler)
+            new FrameCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                     .load(getContext().getApplicationContext(), mUri, l);
         }
+    }
+
+    /**
+     * Format time, convert milliseconds into seconds: (00:00) format
+     * String.format("%02d:%02d", time / 1000 / 60, time / 1000 % 60)
+     */
+    public static String formatTime(long time) {
+        StringBuilder sb;
+        long min = time / 1000 / 60;
+        long sec = time / 1000 % 60;
+        if (min / 10 < 1) {
+            sb = new StringBuilder("0");
+            sb.append(String.valueOf(min));
+        } else {
+            sb = new StringBuilder(String.valueOf(min));
+        }
+        sb.append(":");
+        if (sec / 10 < 1) {
+            sb.append("0");
+        }
+        sb.append(String.valueOf(sec));
+        return sb.toString();
     }
 
     @SuppressWarnings("unused")

@@ -4,17 +4,21 @@ import android.content.Context;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.d.lib.cache.base.AbstractCacheFetcher;
 import com.d.lib.cache.base.CacheListener;
+import com.d.lib.cache.base.DiskCacheStrategies;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
+import com.d.lib.cache.base.RequestOptions;
+import com.d.lib.cache.utils.threadpool.Schedulers;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by D on 2017/10/18.
@@ -43,16 +47,19 @@ public class DurationCacheFetcher extends AbstractCacheFetcher<DurationCacheFetc
 
     @Override
     public LruCache<String, Long> getLruCache() {
-        return Singleton.getInstance().lruCache;
+        return Singleton.getInstance().mLruCache;
     }
 
     @Override
-    public HashMap<String, ArrayList<CacheListener<Long>>> getHashMap() {
-        return Singleton.getInstance().hashMap;
+    public HashMap<String, List<CacheListener<Long>>> getHashMap() {
+        return Singleton.getInstance().mHashMap;
     }
 
-    public DurationCacheFetcher(Context context, int scheduler, int observeOnScheduler) {
-        super(context, scheduler, observeOnScheduler);
+    public DurationCacheFetcher(@NonNull Context context,
+                                @NonNull RequestOptions requestOptions,
+                                @Schedulers.Scheduler int scheduler,
+                                @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @Override
@@ -92,12 +99,18 @@ public class DurationCacheFetcher extends AbstractCacheFetcher<DurationCacheFetc
 
     @Override
     protected Long getDisk(String url) {
-        return (Long) aCache.getAsObject(getPreFix() + url);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return null;
+        }
+        return (Long) A_CACHE.getAsObject(getPreFix() + url);
     }
 
     @Override
     protected void putDisk(String url, Long value) {
-        aCache.put(getPreFix() + url, value);
+        if (mRequestOptions.diskCacheStrategy == DiskCacheStrategies.NONE) {
+            return;
+        }
+        A_CACHE.put(getPreFix() + url, value);
     }
 
     public static void release() {

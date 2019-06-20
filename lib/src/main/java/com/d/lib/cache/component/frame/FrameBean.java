@@ -3,15 +3,13 @@ package com.d.lib.cache.component.frame;
 import android.graphics.drawable.Drawable;
 
 public class FrameBean {
-    public String thumb;
     public Drawable drawable;
     public Long duration;
+    public String thumb;
 
-    public static FrameBean create(String thumb, Drawable drawable, Long duration) {
-        FrameBean bean = new FrameBean();
-        bean.thumb = thumb;
-        bean.drawable = drawable;
-        bean.duration = duration;
-        return bean;
+    public FrameBean(Drawable drawable, Long duration, String thumb) {
+        this.drawable = drawable;
+        this.duration = duration;
+        this.thumb = thumb;
     }
 }
