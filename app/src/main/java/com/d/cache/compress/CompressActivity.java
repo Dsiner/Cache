@@ -3,6 +3,7 @@ package com.d.cache.compress;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -26,8 +27,14 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_choose_image:
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                final Intent intent;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                } else {
+                    intent = new Intent(Intent.ACTION_GET_CONTENT);
+                }
                 intent.setType("image/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, PICK_IMAGE_REQUEST);
                 break;
 
@@ -44,7 +51,11 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
                 CompressCache.with(getApplicationContext())
                         .load(path)
                         .apply(new CompressOptions<Bitmap>()
-                                .ignoreBy(100))
+                                .setMaxWidth(1024)
+                                .setMaxHeight(1024)
+                                .setFormat(Bitmap.CompressFormat.JPEG)
+                                .setMaxSize(30)
+                                .setAverage(true))
                         .into(ivCompress);
 
 //                CompressCache.with(getApplicationContext())

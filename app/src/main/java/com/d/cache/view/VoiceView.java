@@ -7,7 +7,6 @@ import android.widget.TextView;
 
 import com.d.lib.cache.component.duration.DurationCache;
 import com.d.lib.cache.component.duration.IDuration;
-import com.d.lib.cache.utils.Util;
 
 /**
  * Created by D on 2017/10/23.

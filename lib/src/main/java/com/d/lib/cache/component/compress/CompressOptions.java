@@ -72,4 +72,9 @@ public class CompressOptions<T> extends RequestOptions<T> {
         this.options.size = size;
         return this;
     }
+
+    public CompressOptions<T> setAverage(boolean average) {
+        this.options.average = average;
+        return this;
+    }
 }

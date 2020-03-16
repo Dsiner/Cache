@@ -46,11 +46,12 @@ class Engine {
         InputStream input = null;
         try {
             BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = computeSampleSize(mOptions.width, mOptions.height);
-            options.inSampleSize = (mRequestOptions.width > 0 && mRequestOptions.height > 0)
-                    ? Math.max(computeSampleSize(mOptions.width, mOptions.height,
-                    mRequestOptions.width, mRequestOptions.height), options.inSampleSize)
-                    : options.inSampleSize;
+            if (mRequestOptions.width > 0 && mRequestOptions.height > 0) {
+                options.inSampleSize = calculateInSampleSize(mOptions.width, mOptions.height,
+                        mRequestOptions.width, mRequestOptions.height, mRequestOptions.average);
+            } else {
+                options.inSampleSize = calculateInSampleSize(mOptions.width, mOptions.height);
+            }
             options.inJustDecodeBounds = false;
             options.inDither = false;
             options.inPurgeable = true;
@@ -82,18 +83,17 @@ class Engine {
                                                   int quality, int size) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bitmap.compress(format, quality, outputStream);
-        if (size <= 0) {
+        if (Bitmap.CompressFormat.JPEG != format || size <= 0) {
             return outputStream;
         }
-        while (outputStream.size() / 1024 > size && quality > 3) {
+        while (outputStream.size() / 1024 > size && quality > 1) {
             outputStream.reset();
-            if (quality > 6) {
+            if (quality > 10) {
                 quality -= 10;
-                quality = Math.max(6, quality);
             } else {
                 quality -= 3;
-                quality = Math.max(3, quality);
             }
+            quality = Math.max(1, quality);
             bitmap.compress(format, quality, outputStream);
         }
         return outputStream;
@@ -116,15 +116,21 @@ class Engine {
         return bitmap;
     }
 
-    private int computeSampleSize(int width, int height, int maxWidth, int maxHeight) {
+    private int calculateInSampleSize(int width, int height, int maxWidth, int maxHeight, boolean average) {
         int inSampleSize = 1;
-        while (width / inSampleSize > maxWidth || height / inSampleSize > maxHeight) {
-            inSampleSize *= 2;
+        if (average) {
+            while ((width / inSampleSize) * (height / inSampleSize) > maxWidth * maxHeight) {
+                inSampleSize *= 2;
+            }
+        } else {
+            while (width / inSampleSize > maxWidth || height / inSampleSize > maxHeight) {
+                inSampleSize *= 2;
+            }
         }
         return inSampleSize;
     }
 
-    private int computeSampleSize(int width, int height) {
+    private int calculateInSampleSize(int width, int height) {
         width = width % 2 == 1 ? width + 1 : width;
         height = height % 2 == 1 ? height + 1 : height;
 

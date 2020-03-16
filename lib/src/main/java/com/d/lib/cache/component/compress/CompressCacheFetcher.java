@@ -53,10 +53,11 @@ public abstract class CompressCacheFetcher<T>
     protected ByteArrayOutputStream convert(InputStream inputStream) throws IOException {
         ByteArrayOutputStream outputStream;
         outputStream = new ByteArrayOutputStream();
-        byte[] b = new byte[1024];
+        byte[] b = new byte[4096];
         int len;
         while ((len = inputStream.read(b)) != -1) {
             outputStream.write(b, 0, len);
+            outputStream.flush();
         }
         return outputStream;
     }

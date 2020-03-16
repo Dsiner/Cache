@@ -14,8 +14,9 @@ public class BitmapOptions {
     int height;
     int degree;
 
-    int quality = 60;
+    int quality = 85;
     int size;
+    boolean average = false;
 
     public static String mimeType(Bitmap.CompressFormat format) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH
@@ -45,6 +46,6 @@ public class BitmapOptions {
 
     @Override
     public String toString() {
-        return "" + width + "*" + height + degree + quality + size + format;
+        return "" + width + "*" + height + "-" + degree + "-" + quality + "-" + size + "-" + format;
     }
 }

@@ -1,5 +1,6 @@
 package com.d.lib.cache.component.compress;
 
+import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -8,8 +9,15 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 public class UriUtil {
+    private static final String CACHE_DIR = "/uri_cache";
 
     /**
      * Get a file path from a Uri. This will get the the path for Storage Access
@@ -19,6 +27,7 @@ public class UriUtil {
      * @param context The context.
      * @param uri     The Uri to query.
      */
+    @Nullable
     public static String getPath(final Context context, final Uri uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
                 && DocumentsContract.isDocumentUri(context, uri)) {
@@ -31,9 +40,21 @@ public class UriUtil {
 
                 if ("primary".equalsIgnoreCase(type)) {
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
-                }
+                } else {
+                    final int splitIndex = docId.indexOf(':', 1);
+                    final String tag = docId.substring(0, splitIndex);
+                    final String path = docId.substring(splitIndex + 1);
 
-                // TODO handle non-primary volumes
+                    String nonPrimaryVolume = getPathToNonPrimaryVolume(context, tag);
+                    if (nonPrimaryVolume != null) {
+                        String result = nonPrimaryVolume + "/" + path;
+                        File file = new File(result);
+                        if (file.exists() && file.canRead()) {
+                            return result;
+                        }
+                        return null;
+                    }
+                }
             } else if (isDownloadsDocument(uri)) {
                 // DownloadsProvider
                 final String id = DocumentsContract.getDocumentId(uri);
@@ -60,6 +81,10 @@ public class UriUtil {
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
         } else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            // Return the remote address
+            if (isGooglePhotosUri(uri)) {
+                return uri.getLastPathSegment();
+            }
             // MediaStore (and general)
             return getDataColumn(context, uri, null, null);
         } else if ("file".equalsIgnoreCase(uri.getScheme())) {
@@ -67,6 +92,25 @@ public class UriUtil {
             return uri.getPath();
         }
 
+        return null;
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private static String getPathToNonPrimaryVolume(Context context, String tag) {
+        File[] volumes = context.getExternalCacheDirs();
+        if (volumes != null) {
+            for (File volume : volumes) {
+                if (volume != null) {
+                    String path = volume.getAbsolutePath();
+                    if (path != null) {
+                        int index = path.indexOf(tag);
+                        if (index != -1) {
+                            return path.substring(0, index) + tag;
+                        }
+                    }
+                }
+            }
+        }
         return null;
     }
 
@@ -83,13 +127,21 @@ public class UriUtil {
     public static String getDataColumn(Context context, Uri uri, String selection,
                                        String[] selectionArgs) {
         Cursor cursor = null;
-        final String column = "_data";
-        final String[] projection = {column};
+        final String[] projection = {MediaStore.MediaColumns.DATA,
+                MediaStore.MediaColumns.DISPLAY_NAME};
         try {
             cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
             if (cursor != null && cursor.moveToFirst()) {
-                final int column_index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(column_index);
+                final int column_index = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+                final String path = column_index > -1 ? cursor.getString(column_index) : null;
+                if (path != null) {
+                    return path;
+                } else {
+                    final int indexDisplayName = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME);
+                    final String fileName = cursor.getString(indexDisplayName);
+                    final File fileWritten = writeToFile(context, fileName, uri);
+                    return fileWritten.getAbsolutePath();
+                }
             }
         } finally {
             if (cursor != null) {
@@ -97,6 +149,58 @@ public class UriUtil {
             }
         }
         return null;
+    }
+
+    /**
+     * If an image/video has been selected from a cloud storage, this method
+     * should be call to download the file in the cache folder.
+     *
+     * @param context  The context
+     * @param fileName Downloaded file's name
+     * @param uri      File's URI
+     * @return File that has been written
+     */
+    private static File writeToFile(Context context, String fileName, Uri uri) {
+        final String tmpDir = context.getCacheDir() + CACHE_DIR;
+        final File path = new File(tmpDir);
+        if (!path.exists()) {
+            path.mkdir();
+        }
+        final String name = fileName.substring(fileName.lastIndexOf('/') + 1);
+        final File file = new File(path, name);
+        FileOutputStream oos = null;
+        InputStream is = null;
+        try {
+            byte[] buf = new byte[8192];
+            oos = new FileOutputStream(file);
+            is = context.getContentResolver().openInputStream(uri);
+            int c = 0;
+            while ((c = is.read(buf, 0, buf.length)) > 0) {
+                oos.write(buf, 0, c);
+                oos.flush();
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        } finally {
+            closeQuietly(oos);
+            closeQuietly(is);
+        }
+        return file;
+    }
+
+    /**
+     * Closes {@code closeable}, ignoring any checked exceptions. Does nothing if {@code closeable} is
+     * null.
+     */
+    private static void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (RuntimeException rethrown) {
+                throw rethrown;
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     /**
@@ -121,5 +225,13 @@ public class UriUtil {
      */
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is Google Photos.
+     */
+    public static boolean isGooglePhotosUri(Uri uri) {
+        return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
 }
