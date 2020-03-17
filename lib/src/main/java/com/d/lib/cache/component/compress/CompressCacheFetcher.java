@@ -22,7 +22,7 @@ import java.io.InputStream;
 public abstract class CompressCacheFetcher<T>
         extends AbstractCacheFetcher<CompressCacheFetcher<T>, String, T> {
     private static final String TAG = "Compress";
-    private static final String PATH = Environment.getExternalStorageDirectory() + "/Cache/image/";
+    private static final String PATH = Environment.getExternalStorageDirectory().getPath() + "/Cache/image/";
     private static final String DEFAULT_DISK_CACHE_DIR = "compress_disk_cache";
 
     protected final Context mContext;
@@ -47,7 +47,8 @@ public abstract class CompressCacheFetcher<T>
     public File compressFile() throws Exception {
         Engine engine = new Engine(mCompressOptions.provider, mCompressOptions.options);
         ByteArrayOutputStream outputStream = engine.compress();
-        return convert(engine.mOptions.format, outputStream);
+        return convert(engine.mRequestOptions.format != null ? engine.mRequestOptions.format : engine.mOptions.format,
+                outputStream);
     }
 
     protected ByteArrayOutputStream convert(InputStream inputStream) throws IOException {
@@ -64,9 +65,7 @@ public abstract class CompressCacheFetcher<T>
 
     protected File convert(Bitmap.CompressFormat format, ByteArrayOutputStream outputStream) throws IOException {
         String mimeType = BitmapOptions.mimeType(format);
-        File file = !TextUtils.isEmpty(mCompressOptions.name)
-                ? getImageCustomFile(mContext, mCompressOptions.name, mimeType)
-                : getImageCacheFile(mContext, mimeType);
+        File file = getImageCacheFile(mContext, mCompressOptions.name, mimeType);
         FileOutputStream fos = new FileOutputStream(file);
         outputStream.writeTo(fos);
         fos.close();
@@ -88,21 +87,14 @@ public abstract class CompressCacheFetcher<T>
      *
      * @param context Context.
      */
-    private File getImageCacheFile(Context context, String suffix) {
+    private File getImageCacheFile(Context context, String filename, String suffix) {
         if (TextUtils.isEmpty(getPath(mPath))) {
             mPath = getImageCacheDir(context, DEFAULT_DISK_CACHE_DIR).getAbsolutePath();
         }
         String cacheBuilder = mPath + "/"
-                + mCompressOptions.provider.getPath().hashCode()
-                + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
-        return new File(cacheBuilder);
-    }
-
-    private File getImageCustomFile(Context context, String filename, String suffix) {
-        if (TextUtils.isEmpty(getPath(mPath))) {
-            mPath = getImageCacheDir(context, DEFAULT_DISK_CACHE_DIR).getAbsolutePath();
-        }
-        String cacheBuilder = mPath + "/" + filename
+                + (TextUtils.isEmpty(filename)
+                ? (mCompressOptions.provider.getPath() + "-" + mCompressOptions.options.toString()).hashCode()
+                : filename)
                 + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
         return new File(cacheBuilder);
     }

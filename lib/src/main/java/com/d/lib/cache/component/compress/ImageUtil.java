@@ -70,7 +70,7 @@ public class ImageUtil {
                     degree = 270;
                     break;
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return degree;

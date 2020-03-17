@@ -9,7 +9,11 @@ import android.text.TextUtils;
  * Created by D on 2019/6/18.
  **/
 public class BitmapOptions {
-    Bitmap.CompressFormat format = Bitmap.CompressFormat.JPEG;
+    /**
+     * Target image config for decoding.
+     */
+    Bitmap.Config config;
+    Bitmap.CompressFormat format;
     int width;
     int height;
     int degree;
@@ -46,6 +50,8 @@ public class BitmapOptions {
 
     @Override
     public String toString() {
-        return "" + width + "*" + height + "-" + degree + "-" + quality + "-" + size + "-" + format;
+        return "" + width + "*" + height
+                + "-" + degree + "-" + quality + "-" + size + "-" + average
+                + "-" + config + "-" + format;
     }
 }

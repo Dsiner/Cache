@@ -33,10 +33,12 @@ class Engine {
             options.inSampleSize = 1;
             input = mProvider.open();
             BitmapFactory.decodeStream(input, null, options);
-            mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
             mOptions.width = options.outWidth;
             mOptions.height = options.outHeight;
-            mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
+            mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
+            if (Bitmap.CompressFormat.JPEG == mOptions.format) {
+                mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
+            }
         } finally {
             ImageUtil.closeQuietly(input);
         }
@@ -57,6 +59,9 @@ class Engine {
             options.inPurgeable = true;
             options.inInputShareable = true;
             options.inTempStorage = new byte[16 * 1024];
+            if (mRequestOptions.config != null) {
+                options.inPreferredConfig = mRequestOptions.config;
+            }
             input = mProvider.open();
             Bitmap bitmap = BitmapFactory.decodeStream(input, null, options);
 
@@ -67,7 +72,8 @@ class Engine {
             }
 
             ByteArrayOutputStream stream = qualityCompress(bitmap,
-                    mRequestOptions.format, mRequestOptions.quality, mRequestOptions.size);
+                    mRequestOptions.format != null ? mRequestOptions.format : mOptions.format,
+                    mRequestOptions.quality, mRequestOptions.size);
             bitmap.recycle();
             return stream;
         } catch (IOException e) {
@@ -83,17 +89,17 @@ class Engine {
                                                   int quality, int size) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bitmap.compress(format, quality, outputStream);
-        if (Bitmap.CompressFormat.JPEG != format || size <= 0) {
+        if (Bitmap.CompressFormat.PNG == format || size <= 0) {
             return outputStream;
         }
-        while (outputStream.size() / 1024 > size && quality > 1) {
+        while (outputStream.size() / 1024 > size && quality > 0) {
             outputStream.reset();
             if (quality > 10) {
                 quality -= 10;
             } else {
                 quality -= 3;
             }
-            quality = Math.max(1, quality);
+            quality = Math.max(0, quality);
             bitmap.compress(format, quality, outputStream);
         }
         return outputStream;
@@ -117,6 +123,9 @@ class Engine {
     }
 
     private int calculateInSampleSize(int width, int height, int maxWidth, int maxHeight, boolean average) {
+        width = width % 2 == 1 ? width + 1 : width;
+        height = height % 2 == 1 ? height + 1 : height;
+
         int inSampleSize = 1;
         if (average) {
             while ((width / inSampleSize) * (height / inSampleSize) > maxWidth * maxHeight) {

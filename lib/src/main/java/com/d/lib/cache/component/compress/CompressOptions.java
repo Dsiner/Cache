@@ -27,6 +27,16 @@ public class CompressOptions<T> extends RequestOptions<T> {
         return (CompressOptions<T>) super.error(error);
     }
 
+    @Override
+    public CompressOptions<T> skipMemoryCache(boolean skip) {
+        return (CompressOptions<T>) super.skipMemoryCache(skip);
+    }
+
+    @Override
+    public CompressOptions<T> diskCacheStrategy(int strategy) {
+        return (CompressOptions<T>) super.diskCacheStrategy(strategy);
+    }
+
     /**
      * Do not compress when the origin image file size less than one value
      *
@@ -37,28 +47,33 @@ public class CompressOptions<T> extends RequestOptions<T> {
         return this;
     }
 
-    public CompressOptions<T> setPath(String path, String name) {
+    public CompressOptions<T> path(String path, String name) {
         this.path = path;
         this.name = name;
         return this;
     }
 
-    public CompressOptions<T> setFormat(Bitmap.CompressFormat format) {
+    public CompressOptions<T> config(Bitmap.Config config) {
+        this.options.config = config;
+        return this;
+    }
+
+    public CompressOptions<T> format(Bitmap.CompressFormat format) {
         this.options.format = format;
         return this;
     }
 
-    public CompressOptions<T> setMaxWidth(int size) {
+    public CompressOptions<T> maxWidth(int size) {
         this.options.width = size;
         return this;
     }
 
-    public CompressOptions<T> setMaxHeight(int size) {
+    public CompressOptions<T> maxHeight(int size) {
         this.options.height = size;
         return this;
     }
 
-    public CompressOptions<T> setQuality(int quality) {
+    public CompressOptions<T> quality(int quality) {
         this.options.quality = quality;
         return this;
     }
@@ -68,12 +83,12 @@ public class CompressOptions<T> extends RequestOptions<T> {
      *
      * @param size The value of file size, unit KB
      */
-    public CompressOptions<T> setMaxSize(int size) {
+    public CompressOptions<T> maxSize(int size) {
         this.options.size = size;
         return this;
     }
 
-    public CompressOptions<T> setAverage(boolean average) {
+    public CompressOptions<T> average(boolean average) {
         this.options.average = average;
         return this;
     }
