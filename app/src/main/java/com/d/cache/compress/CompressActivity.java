@@ -20,10 +20,13 @@ import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.DiskCacheStrategies;
 import com.d.lib.cache.component.compress.CompressCache;
 import com.d.lib.cache.component.compress.CompressOptions;
+import com.d.lib.cache.component.compress.Engine;
 import com.d.lib.cache.component.compress.UriUtil;
-import com.d.lib.cache.component.compress.strategy.CalculateStrategy;
+import com.d.lib.cache.component.compress.strategy.LongPictureStrategy;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 public class CompressActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int PICK_IMAGE_REQUEST = 1;
@@ -69,11 +72,11 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
                 .asFile()
                 .load(path)
                 .apply(new CompressOptions<File>()
-                        .strategy(new CalculateStrategy())
+                        .strategy(new LongPictureStrategy())
                         .config(Bitmap.Config.ARGB_8888)
                         .format(Bitmap.CompressFormat.JPEG)
-                        .quality(85)
-                        .maxSize(524)
+                        .quality(95)
+                        .maxSize(512)
                         .skipMemoryCache(true)
                         .diskCacheStrategy(DiskCacheStrategies.NONE))
                 .listener(new CacheListener<File>() {
@@ -91,8 +94,17 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
                             Log.d("Cache", "CompressCache bitmap info--> " + getInfo(bitmap));
                         }
 
+                        BitmapFactory.Options options = null;
+                        try {
+                            options = Engine.decodeStream(new FileInputStream(result));
+                            if (options.outWidth * options.outHeight < 15 * 1024 * 1024) {
+                                iv_compress.setImageBitmap(bitmap);
+                            }
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        }
+
                         tv_compress_info.setText(getInfo(bitmap));
-                        iv_compress.setImageBitmap(bitmap);
                         if (result.exists() && result.isFile()) {
                             MediaScannerConnection.scanFile(getApplicationContext(),
                                     new String[]{result.getAbsolutePath()}, null, null);
@@ -109,9 +121,9 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
 
     private String getInfo(Bitmap bitmap) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            return " byteCount: " + bitmap.getByteCount()
-                    + " AllocationByteCount: " + bitmap.getAllocationByteCount()
-                    + " \n width: " + bitmap.getWidth()
+            return "byteCount: " + bitmap.getByteCount()
+                    + "\nAllocationByteCount: " + bitmap.getAllocationByteCount()
+                    + "\nwidth: " + bitmap.getWidth()
                     + " height: " + bitmap.getHeight();
         }
         return "";
@@ -153,11 +165,13 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
                 }
                 Bitmap bitmap = BitmapFactory.decodeFile(path);
                 tv_original_info.setText(getInfo(bitmap));
+                tv_compress_info.setText("Ready to compress");
                 iv_original.setImageBitmap(bitmap);
             } catch (Throwable e) {
                 toast("Failed to read picture data!");
                 e.printStackTrace();
                 tv_original_info.setText("Failed to read picture data!");
+                tv_compress_info.setText("Compress...");
                 compress((String) iv_original.getTag());
             }
         }

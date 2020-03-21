@@ -13,13 +13,11 @@ import java.io.InputStream;
  * Created by D on 2020/3/21.
  */
 public class LimitStrategy extends CompressStrategy {
-    private final int mInSampleWidth;
-    private final int mInSampleHeight;
     private final boolean mAverage;
 
     public LimitStrategy() {
-        this.mInSampleWidth = 1024;
-        this.mInSampleHeight = 1024;
+        this.mInSampleWidth = 1080 * 2;
+        this.mInSampleHeight = 1920 * 2;
         this.mAverage = true;
     }
 

@@ -16,6 +16,14 @@ import java.io.InputStream;
  * Created by D on 2020/3/21.
  */
 public abstract class CompressStrategy {
+    public static final float[] PIXELS = new float[]{1080, 960, 900, 800, 768,
+            720, 640, 600, 540, 480, 400, 360, 320};
+
+    protected int mInSampleWidth = 1600 * 2;
+    protected int mInSampleHeight = 1600 * 2;
+
+    protected int mMaxWidth = 1080;
+    protected int mMaxHeight = 1080;
 
     public abstract Bitmap decodeStream(@NonNull InputStream input, @NonNull BitmapOptions opts,
                                         @NonNull BitmapFactory.Options setting);
@@ -47,5 +55,15 @@ public abstract class CompressStrategy {
                                                  @NonNull BitmapOptions requestOpts) {
         Bitmap.CompressFormat format = requestOpts.format != null ? requestOpts.format : opts.format;
         return Engine.qualityCompress(source, format, requestOpts.quality, requestOpts.size);
+    }
+
+    protected float getScale(final float scale, final int shortSide) {
+        for (float pixel : PIXELS) {
+            float sx = pixel / shortSide;
+            if (sx < scale) {
+                return sx;
+            }
+        }
+        return scale;
     }
 }

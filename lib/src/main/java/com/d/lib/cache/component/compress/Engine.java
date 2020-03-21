@@ -3,6 +3,7 @@ package com.d.lib.cache.component.compress;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,11 +25,8 @@ public class Engine {
     private void initOptions() throws IOException {
         InputStream input = null;
         try {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            options.inSampleSize = 1;
             input = mProvider.open();
-            BitmapFactory.decodeStream(input, null, options);
+            BitmapFactory.Options options = decodeStream(input);
             mOptions.width = options.outWidth;
             mOptions.height = options.outHeight;
             mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
@@ -52,15 +50,11 @@ public class Engine {
             if (mRequestOptions.config != null) {
                 options.inPreferredConfig = mRequestOptions.config;
             }
-
             input = mProvider.open();
-
             Bitmap bitmap = mRequestOptions.strategy.decodeStream(input, mOptions, options);
             bitmap = mRequestOptions.strategy.matrix(bitmap, mOptions);
-
-            ByteArrayOutputStream stream = qualityCompress(bitmap,
-                    mRequestOptions.format != null ? mRequestOptions.format : mOptions.format,
-                    mRequestOptions.quality, mRequestOptions.size);
+            ByteArrayOutputStream stream = mRequestOptions.strategy.qualityCompress(bitmap,
+                    mOptions, mRequestOptions);
             bitmap.recycle();
             return stream;
         } catch (IOException e) {
@@ -69,6 +63,14 @@ public class Engine {
         } finally {
             ImageUtil.closeQuietly(input);
         }
+    }
+
+    public static BitmapFactory.Options decodeStream(InputStream input) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        options.inSampleSize = 1;
+        BitmapFactory.decodeStream(input, null, options);
+        return options;
     }
 
     public static ByteArrayOutputStream qualityCompress(Bitmap bitmap,
@@ -89,6 +91,7 @@ public class Engine {
             quality = Math.max(0, quality);
             bitmap.compress(format, quality, outputStream);
         }
+        Log.d("dsiner", "size: " + outputStream.size() + " qualite: " + quality);
         return outputStream;
     }
 }

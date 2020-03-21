@@ -12,6 +12,7 @@ import java.io.InputStream;
  * CalculateStrategy
  * Created by D on 2020/3/21.
  */
+@Deprecated
 public class CalculateStrategy extends CompressStrategy {
 
     @Override
