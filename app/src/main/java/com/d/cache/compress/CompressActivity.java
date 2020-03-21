@@ -21,6 +21,7 @@ import com.d.lib.cache.base.DiskCacheStrategies;
 import com.d.lib.cache.component.compress.CompressCache;
 import com.d.lib.cache.component.compress.CompressOptions;
 import com.d.lib.cache.component.compress.UriUtil;
+import com.d.lib.cache.component.compress.strategy.CalculateStrategy;
 
 import java.io.File;
 
@@ -68,13 +69,11 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
                 .asFile()
                 .load(path)
                 .apply(new CompressOptions<File>()
+                        .strategy(new CalculateStrategy())
                         .config(Bitmap.Config.ARGB_8888)
                         .format(Bitmap.CompressFormat.JPEG)
-                        .maxWidth(1024)
-                        .maxHeight(1024)
-                        .quality(90)
-                        .maxSize(475)
-                        .average(true)
+                        .quality(85)
+                        .maxSize(524)
                         .skipMemoryCache(true)
                         .diskCacheStrategy(DiskCacheStrategies.NONE))
                 .listener(new CacheListener<File>() {

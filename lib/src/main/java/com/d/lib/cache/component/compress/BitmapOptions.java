@@ -4,23 +4,24 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.text.TextUtils;
 
+import com.d.lib.cache.component.compress.strategy.CompressStrategy;
+import com.d.lib.cache.component.compress.strategy.DefaultStrategy;
+
 /**
  * BitmapOptions
  * Created by D on 2019/6/18.
  **/
 public class BitmapOptions {
-    /**
-     * Target image config for decoding.
-     */
-    Bitmap.Config config;
-    Bitmap.CompressFormat format;
-    int width;
-    int height;
-    int degree;
+    CompressStrategy strategy = new DefaultStrategy();
 
-    int quality = 85;
-    int size;
-    boolean average = false;
+    Bitmap.Config config; // Target image config for decoding.
+    public Bitmap.CompressFormat format;
+    public int width;
+    public int height;
+    public int degree;
+
+    public int quality = 85;
+    public int size;
 
     public static String mimeType(Bitmap.CompressFormat format) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH
@@ -51,7 +52,7 @@ public class BitmapOptions {
     @Override
     public String toString() {
         return "" + width + "*" + height
-                + "-" + degree + "-" + quality + "-" + size + "-" + average
+                + "-" + quality + "-" + size
                 + "-" + config + "-" + format;
     }
 }

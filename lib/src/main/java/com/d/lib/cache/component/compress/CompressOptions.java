@@ -1,9 +1,11 @@
 package com.d.lib.cache.component.compress;
 
 import android.graphics.Bitmap;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.d.lib.cache.base.RequestOptions;
+import com.d.lib.cache.component.compress.strategy.CompressStrategy;
 
 /**
  * RequestOptions
@@ -38,6 +40,14 @@ public class CompressOptions<T> extends RequestOptions<T> {
     }
 
     /**
+     * Compression strategy
+     */
+    public CompressOptions<T> strategy(@NonNull CompressStrategy strategy) {
+        this.options.strategy = strategy;
+        return this;
+    }
+
+    /**
      * Do not compress when the origin image file size less than one value
      *
      * @param size The value of file size, unit KB, default 100K
@@ -63,16 +73,6 @@ public class CompressOptions<T> extends RequestOptions<T> {
         return this;
     }
 
-    public CompressOptions<T> maxWidth(int size) {
-        this.options.width = size;
-        return this;
-    }
-
-    public CompressOptions<T> maxHeight(int size) {
-        this.options.height = size;
-        return this;
-    }
-
     public CompressOptions<T> quality(int quality) {
         this.options.quality = quality;
         return this;
@@ -85,11 +85,6 @@ public class CompressOptions<T> extends RequestOptions<T> {
      */
     public CompressOptions<T> maxSize(int size) {
         this.options.size = size;
-        return this;
-    }
-
-    public CompressOptions<T> average(boolean average) {
-        this.options.average = average;
         return this;
     }
 }
