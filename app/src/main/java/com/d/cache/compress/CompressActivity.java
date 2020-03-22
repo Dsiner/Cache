@@ -22,11 +22,8 @@ import com.d.lib.cache.component.compress.CompressCache;
 import com.d.lib.cache.component.compress.CompressOptions;
 import com.d.lib.cache.component.compress.Engine;
 import com.d.lib.cache.component.compress.UriUtil;
-import com.d.lib.cache.component.compress.strategy.LongPictureStrategy;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 
 public class CompressActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int PICK_IMAGE_REQUEST = 1;
@@ -72,11 +69,11 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
                 .asFile()
                 .load(path)
                 .apply(new CompressOptions<File>()
-                        .strategy(new LongPictureStrategy())
+//                        .strategy(new LimitStrategy(1024, 1024, true))
                         .config(Bitmap.Config.ARGB_8888)
                         .format(Bitmap.CompressFormat.JPEG)
                         .quality(95)
-                        .maxSize(512)
+                        .maxSize(375)
                         .skipMemoryCache(true)
                         .diskCacheStrategy(DiskCacheStrategies.NONE))
                 .listener(new CacheListener<File>() {
@@ -86,28 +83,23 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
                     }
 
                     @Override
-                    public void onSuccess(File result) {
-                        Log.d("Cache", "CompressCache onSuccess--> " + result.getAbsolutePath());
-                        Bitmap bitmap = BitmapFactory.decodeFile(result.getAbsolutePath());
+                    public void onSuccess(File file) {
+                        Log.d("Cache", "CompressCache onSuccess--> " + file.getAbsolutePath());
+                        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                             Log.d("Cache", "CompressCache bitmap info--> " + getInfo(bitmap));
                         }
 
-                        BitmapFactory.Options options = null;
-                        try {
-                            options = Engine.decodeStream(new FileInputStream(result));
-                            if (options.outWidth * options.outHeight < 15 * 1024 * 1024) {
-                                iv_compress.setImageBitmap(bitmap);
-                            }
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
+                        BitmapFactory.Options options = Engine.decodeStream(file);
+                        if (options != null && options.outWidth * options.outHeight < 15 * 1024 * 1024) {
+                            iv_compress.setImageBitmap(bitmap);
                         }
 
                         tv_compress_info.setText(getInfo(bitmap));
-                        if (result.exists() && result.isFile()) {
+                        if (file.exists() && file.isFile()) {
                             MediaScannerConnection.scanFile(getApplicationContext(),
-                                    new String[]{result.getAbsolutePath()}, null, null);
+                                    new String[]{file.getAbsolutePath()}, null, null);
                         }
                     }
 

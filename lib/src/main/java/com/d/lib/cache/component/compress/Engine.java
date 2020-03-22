@@ -3,9 +3,13 @@ package com.d.lib.cache.component.compress;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -23,18 +27,12 @@ public class Engine {
     }
 
     private void initOptions() throws IOException {
-        InputStream input = null;
-        try {
-            input = mProvider.open();
-            BitmapFactory.Options options = decodeStream(input);
-            mOptions.width = options.outWidth;
-            mOptions.height = options.outHeight;
-            mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
-            if (Bitmap.CompressFormat.JPEG == mOptions.format) {
-                mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
-            }
-        } finally {
-            ImageUtil.closeQuietly(input);
+        BitmapFactory.Options options = decodeStream(mProvider.open());
+        mOptions.width = options.outWidth;
+        mOptions.height = options.outHeight;
+        mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
+        if (Bitmap.CompressFormat.JPEG == mOptions.format) {
+            mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
         }
     }
 
@@ -65,12 +63,26 @@ public class Engine {
         }
     }
 
-    public static BitmapFactory.Options decodeStream(InputStream input) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        options.inSampleSize = 1;
-        BitmapFactory.decodeStream(input, null, options);
-        return options;
+    @Nullable
+    public static BitmapFactory.Options decodeStream(final File file) {
+        try {
+            return decodeStream(new FileInputStream(file));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static BitmapFactory.Options decodeStream(final InputStream input) {
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            options.inSampleSize = 1;
+            BitmapFactory.decodeStream(input, null, options);
+            return options;
+        } finally {
+            ImageUtil.closeQuietly(input);
+        }
     }
 
     public static ByteArrayOutputStream qualityCompress(Bitmap bitmap,
@@ -81,7 +93,7 @@ public class Engine {
         if (Bitmap.CompressFormat.PNG == format || size <= 0) {
             return outputStream;
         }
-        while (outputStream.size() / 1024 > size && quality > 0) {
+        while (outputStream.size() / 1024f > size && quality > 0) {
             outputStream.reset();
             if (quality > 10) {
                 quality -= 10;
@@ -91,7 +103,7 @@ public class Engine {
             quality = Math.max(0, quality);
             bitmap.compress(format, quality, outputStream);
         }
-        Log.d("dsiner", "size: " + outputStream.size() + " qualite: " + quality);
+        Log.d("Compress", "Compress size: " + outputStream.size() + " quality: " + quality);
         return outputStream;
     }
 }
