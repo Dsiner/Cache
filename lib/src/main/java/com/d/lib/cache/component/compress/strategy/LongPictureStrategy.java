@@ -17,7 +17,17 @@ import java.io.InputStream;
  */
 public class LongPictureStrategy extends CompressStrategy {
     public static final float LONG_PICTURE_SCALE = 0.14f;
-    public static final float LONG_PICTURE_IN_SAMPLE_WIDTH = 1024;
+    public static final float LONG_PICTURE_IN_SAMPLE_WIDTH = 600 * 2;
+
+    private final int mMaxSize;
+
+    public LongPictureStrategy() {
+        this.mMaxSize = 4 * 1024;
+    }
+
+    public LongPictureStrategy(int size) {
+        this.mMaxSize = size;
+    }
 
     @Override
     public Bitmap decodeStream(@NonNull InputStream input, @NonNull BitmapOptions opts,
@@ -100,9 +110,9 @@ public class LongPictureStrategy extends CompressStrategy {
         Bitmap.CompressFormat format = requestOpts.format != null ? requestOpts.format : opts.format;
         if (scale < LONG_PICTURE_SCALE) {
             // Long picture
-            int size = (int) (width * height / (float) (mMaxWidth * mMaxHeight)
-                    * requestOpts.size * 0.85f);
-            size = (int) Math.min(4f * 1024, size);
+            int size = (int) (1f * width * height / (float) (mMaxWidth * mMaxHeight)
+                    * requestOpts.size);
+            size = Math.min(size, mMaxSize);
             return Engine.qualityCompress(source, format, requestOpts.quality, size);
         } else {
             return Engine.qualityCompress(source, format, requestOpts.quality, requestOpts.size);

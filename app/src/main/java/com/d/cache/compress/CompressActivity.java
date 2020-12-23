@@ -22,6 +22,7 @@ import com.d.lib.cache.component.compress.CompressCache;
 import com.d.lib.cache.component.compress.CompressOptions;
 import com.d.lib.cache.component.compress.Engine;
 import com.d.lib.cache.component.compress.UriUtil;
+import com.d.lib.cache.component.compress.strategy.LongPictureStrategy;
 
 import java.io.File;
 
@@ -61,15 +62,13 @@ public class CompressActivity extends AppCompatActivity implements View.OnClickL
         iv_compress.setVisibility(View.VISIBLE);
         iv_compress.setImageDrawable(null);
         CompressCache.clear(iv_compress);
-//        CompressCache.with(getApplicationContext())
-//                .load(path)
-//                .into(iv_compress);
+        // CompressCache.with(this).load(path).into(iv_compress);
 
-        CompressCache.with(getApplicationContext())
+        CompressCache.with(this)
                 .asFile()
                 .load(path)
                 .apply(new CompressOptions<File>()
-//                        .strategy(new LimitStrategy(1024, 1024, true))
+                        .strategy(new LongPictureStrategy())
                         .config(Bitmap.Config.ARGB_8888)
                         .format(Bitmap.CompressFormat.JPEG)
                         .quality(95)
