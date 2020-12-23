@@ -1,4 +1,4 @@
-package com.d.lib.cache.component.decoder;
+package com.d.lib.cache.component.imageloader.decoder;
 
 /**
  * ResourceDecoder

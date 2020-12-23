@@ -1,4 +1,4 @@
-package com.d.lib.cache.component.image;
+package com.d.lib.cache.component.imageloader;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -14,12 +14,12 @@ import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
 import com.d.lib.cache.base.RequestOptions;
-import com.d.lib.cache.component.fetcher.BitmapHunter;
-import com.d.lib.cache.component.fetcher.DataFetcher;
-import com.d.lib.cache.component.fetcher.HttpStreamFetcher;
-import com.d.lib.cache.component.fetcher.Priority;
-import com.d.lib.cache.component.fetcher.Request;
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.component.imageloader.fetcher.BitmapHunter;
+import com.d.lib.cache.component.imageloader.fetcher.DataFetcher;
+import com.d.lib.cache.component.imageloader.fetcher.HttpStreamFetcher;
+import com.d.lib.cache.component.imageloader.fetcher.Priority;
+import com.d.lib.cache.component.imageloader.fetcher.Request;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -31,23 +31,15 @@ import java.util.List;
 public class ImageCacheFetcher extends AbstractCacheFetcher<ImageCacheFetcher,
         String, Bitmap> {
 
-    private static class Singleton {
-        private volatile static LruCacheMap<String, Bitmap> CACHE = new LruCacheMap<>(12);
+    public ImageCacheFetcher(@NonNull Context context,
+                             @NonNull RequestOptions requestOptions,
+                             @Schedulers.Scheduler int scheduler,
+                             @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
+    }
 
-        private static LruCacheMap<String, Bitmap> getInstance() {
-            if (CACHE == null) {
-                synchronized (Singleton.class) {
-                    if (CACHE == null) {
-                        CACHE = new LruCacheMap<>(12);
-                    }
-                }
-            }
-            return CACHE;
-        }
-
-        private static void release() {
-            CACHE = null;
-        }
+    public static void release() {
+        Singleton.release();
     }
 
     @Override
@@ -58,13 +50,6 @@ public class ImageCacheFetcher extends AbstractCacheFetcher<ImageCacheFetcher,
     @Override
     public HashMap<String, List<CacheListener<Bitmap>>> getHashMap() {
         return Singleton.getInstance().mHashMap;
-    }
-
-    public ImageCacheFetcher(@NonNull Context context,
-                             @NonNull RequestOptions requestOptions,
-                             @Schedulers.Scheduler int scheduler,
-                             @Schedulers.Scheduler int observeOnScheduler) {
-        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -120,7 +105,22 @@ public class ImageCacheFetcher extends AbstractCacheFetcher<ImageCacheFetcher,
         A_CACHE.put(getPreFix() + url, value);
     }
 
-    public static void release() {
-        Singleton.release();
+    private static class Singleton {
+        private volatile static LruCacheMap<String, Bitmap> CACHE = new LruCacheMap<>(12);
+
+        private static LruCacheMap<String, Bitmap> getInstance() {
+            if (CACHE == null) {
+                synchronized (Singleton.class) {
+                    if (CACHE == null) {
+                        CACHE = new LruCacheMap<>(12);
+                    }
+                }
+            }
+            return CACHE;
+        }
+
+        private static void release() {
+            CACHE = null;
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.d.lib.cache.utils.threadpool;
+package com.d.lib.cache.util.threadpool;
 
 import android.support.annotation.NonNull;
 
@@ -8,30 +8,30 @@ import android.support.annotation.NonNull;
  * Created by D on 2018/8/25.
  */
 public abstract class ThreadPool {
-    private volatile static ThreadPool pool;
+    private volatile static ThreadPool INSTANCE;
 
     protected ThreadPool() {
     }
 
     public static void setThreadPool(ThreadPool pool) {
         synchronized (ThreadPool.class) {
-            if (ThreadPool.pool == null) {
+            if (ThreadPool.INSTANCE == null) {
                 // Initialize only once
-                ThreadPool.pool = pool;
+                ThreadPool.INSTANCE = pool;
             }
         }
     }
 
-    public static ThreadPool getIns() {
-        if (pool == null) {
+    public static ThreadPool getInstance() {
+        if (INSTANCE == null) {
             // Not implemented, then use the default
             synchronized (ThreadPool.class) {
-                if (pool == null) {
-                    pool = getDefaultPool();
+                if (INSTANCE == null) {
+                    INSTANCE = getDefaultPool();
                 }
             }
         }
-        return pool;
+        return INSTANCE;
     }
 
     @NonNull
@@ -39,17 +39,17 @@ public abstract class ThreadPool {
         return new ThreadPool() {
             @Override
             public void executeMain(Runnable r) {
-                TaskManager.getIns().executeMain(r);
+                TaskManager.getInstance().executeMain(r);
             }
 
             @Override
             public void executeTask(Runnable r) {
-                TaskManager.getIns().executeTask(r);
+                TaskManager.getInstance().executeTask(r);
             }
 
             @Override
             public void executeNew(Runnable r) {
-                TaskManager.getIns().executeNew(r);
+                TaskManager.getInstance().executeNew(r);
             }
         };
     }

@@ -33,6 +33,46 @@ public class FrameCache extends AbstractCache<FrameCache,
         return new FrameCache(context);
     }
 
+    /**
+     * Format time, convert milliseconds into seconds: (00:00) format
+     * String.format("%02d:%02d", time / 1000 / 60, time / 1000 % 60)
+     */
+    public static String formatTime(long time) {
+        StringBuilder sb;
+        long min = time / 1000 / 60;
+        long sec = time / 1000 % 60;
+        if (min / 10 < 1) {
+            sb = new StringBuilder("0");
+            sb.append(String.valueOf(min));
+        } else {
+            sb = new StringBuilder(String.valueOf(min));
+        }
+        sb.append(":");
+        if (sec / 10 < 1) {
+            sb.append("0");
+        }
+        sb.append(String.valueOf(sec));
+        return sb.toString();
+    }
+
+    @SuppressWarnings("unused")
+    @UiThread
+    public static void clear(View view) {
+        if (view == null) {
+            return;
+        }
+        view.setTag(TAG_ID, "");
+    }
+
+    @SuppressWarnings("unused")
+    @UiThread
+    public static void release(Context context) {
+        if (context == null) {
+            return;
+        }
+        FrameCacheFetcher.release();
+    }
+
     @Override
     public FrameCache.Observe load(String url) {
         mUri = url;
@@ -42,13 +82,13 @@ public class FrameCache extends AbstractCache<FrameCache,
     public class Observe extends AbsObserve<Observe,
             View, FrameBean, RequestOptions<FrameBean>> {
 
+        Observe() {
+            mRequestOptions = new RequestOptions<>();
+        }
+
         @Override
         protected int TAG() {
             return TAG_ID;
-        }
-
-        Observe() {
-            mRequestOptions = new RequestOptions<>();
         }
 
         @Override
@@ -113,45 +153,5 @@ public class FrameCache extends AbstractCache<FrameCache,
             new FrameCacheFetcher(getContext(), mRequestOptions, mScheduler, mObserveOnScheduler)
                     .load(getContext().getApplicationContext(), mUri, l);
         }
-    }
-
-    /**
-     * Format time, convert milliseconds into seconds: (00:00) format
-     * String.format("%02d:%02d", time / 1000 / 60, time / 1000 % 60)
-     */
-    public static String formatTime(long time) {
-        StringBuilder sb;
-        long min = time / 1000 / 60;
-        long sec = time / 1000 % 60;
-        if (min / 10 < 1) {
-            sb = new StringBuilder("0");
-            sb.append(String.valueOf(min));
-        } else {
-            sb = new StringBuilder(String.valueOf(min));
-        }
-        sb.append(":");
-        if (sec / 10 < 1) {
-            sb.append("0");
-        }
-        sb.append(String.valueOf(sec));
-        return sb.toString();
-    }
-
-    @SuppressWarnings("unused")
-    @UiThread
-    public static void clear(View view) {
-        if (view == null) {
-            return;
-        }
-        view.setTag(TAG_ID, "");
-    }
-
-    @SuppressWarnings("unused")
-    @UiThread
-    public static void release(Context context) {
-        if (context == null) {
-            return;
-        }
-        FrameCacheFetcher.release();
     }
 }

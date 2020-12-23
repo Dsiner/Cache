@@ -43,6 +43,25 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
         return new CompressCache<>(context, Bitmap.class);
     }
 
+    @SuppressWarnings("unused")
+    @UiThread
+    public static void clear(View view) {
+        if (view == null) {
+            return;
+        }
+        view.setTag(TAG_ID, "");
+    }
+
+    @SuppressWarnings("unused")
+    @UiThread
+    public static void release(Context context) {
+        if (context == null) {
+            return;
+        }
+        CompressFileCacheFetcher.release();
+        CompressBitmapCacheFetcher.release();
+    }
+
     public CompressCache<Drawable> asDrawable() {
         return new CompressCache<>(getContext(), Drawable.class);
     }
@@ -100,11 +119,6 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
     public class Observe<Type> extends AbsObserve<Observe<Type>,
             View, Type, CompressOptions<Type>> {
 
-        @Override
-        protected int TAG() {
-            return TAG_ID;
-        }
-
         Observe() {
             mRequestOptions = new CompressOptions<>();
             mRequestOptions.provider = mProvider;
@@ -112,6 +126,11 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
                 mRequestOptions.skipMemoryCache(true);
                 mRequestOptions.diskCacheStrategy(DiskCacheStrategies.NONE);
             }
+        }
+
+        @Override
+        protected int TAG() {
+            return TAG_ID;
         }
 
         @Override
@@ -193,24 +212,5 @@ public class CompressCache<T> extends AbstractCache<CompressCache<T>,
                         .load(getContext().getApplicationContext(), mUri, (CacheListener<ByteArrayOutputStream>) l);
             }
         }
-    }
-
-    @SuppressWarnings("unused")
-    @UiThread
-    public static void clear(View view) {
-        if (view == null) {
-            return;
-        }
-        view.setTag(TAG_ID, "");
-    }
-
-    @SuppressWarnings("unused")
-    @UiThread
-    public static void release(Context context) {
-        if (context == null) {
-            return;
-        }
-        CompressFileCacheFetcher.release();
-        CompressBitmapCacheFetcher.release();
     }
 }

@@ -1,4 +1,4 @@
-package com.d.lib.cache.utils.threadpool;
+package com.d.lib.cache.util.threadpool;
 
 import android.os.Looper;
 import android.support.annotation.IntDef;
@@ -14,17 +14,10 @@ import java.lang.annotation.Target;
  * Created by D on 2018/5/15.
  */
 public class Schedulers {
-    final static int DEFAULT_THREAD = 0;
-    final static int NEW_THREAD = 1;
-    final static int IO = 2;
-    final static int MAIN_THREAD = 3;
-
-    @IntDef({DEFAULT_THREAD, NEW_THREAD, IO, MAIN_THREAD})
-    @Target({ElementType.METHOD, ElementType.PARAMETER})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface Scheduler {
-
-    }
+    static final int DEFAULT_THREAD = 0;
+    static final int NEW_THREAD = 1;
+    static final int IO = 2;
+    static final int MAIN_THREAD = 3;
 
     @Scheduler
     public static int defaultThread() {
@@ -52,13 +45,13 @@ public class Schedulers {
      */
     public static void switchThread(@Scheduler final int scheduler, @NonNull final Runnable runnable) {
         if (scheduler == NEW_THREAD) {
-            TaskManager.getIns().executeNew(runnable);
+            TaskManager.getInstance().executeNew(runnable);
             return;
         } else if (scheduler == IO) {
-            TaskManager.getIns().executeTask(runnable);
+            TaskManager.getInstance().executeTask(runnable);
             return;
         } else if (scheduler == MAIN_THREAD) {
-            TaskManager.getIns().executeMain(runnable);
+            TaskManager.getInstance().executeMain(runnable);
             return;
         }
         runnable.run();
@@ -66,5 +59,12 @@ public class Schedulers {
 
     public static boolean isMainThread() {
         return Looper.getMainLooper().getThread() == Thread.currentThread();
+    }
+
+    @IntDef({DEFAULT_THREAD, NEW_THREAD, IO, MAIN_THREAD})
+    @Target({ElementType.METHOD, ElementType.PARAMETER})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Scheduler {
+
     }
 }

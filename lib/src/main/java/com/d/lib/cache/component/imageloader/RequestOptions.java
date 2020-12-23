@@ -1,4 +1,4 @@
-package com.d.lib.cache.component.image;
+package com.d.lib.cache.component.imageloader;
 
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;

@@ -12,16 +12,14 @@ import com.d.lib.cache.component.compress.strategy.DefaultStrategy;
  * Created by D on 2019/6/18.
  **/
 public class BitmapOptions {
-    CompressStrategy strategy = new DefaultStrategy();
-
-    Bitmap.Config config; // Target image config for decoding.
     public Bitmap.CompressFormat format;
     public int width;
     public int height;
     public int degree;
-
     public int quality = 85;
     public int size;
+    CompressStrategy strategy = new DefaultStrategy();
+    Bitmap.Config config; // Target image config for decoding.
 
     public static String mimeType(Bitmap.CompressFormat format) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH

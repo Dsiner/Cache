@@ -1,4 +1,4 @@
-package com.d.lib.cache.component.image;
+package com.d.lib.cache.component.imageloader;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -31,12 +31,6 @@ public class ImageCache extends AbstractCache<ImageCache,
         return new ImageCache(context);
     }
 
-    @Override
-    public ImageCache.Observe load(String url) {
-        mUri = url;
-        return new ImageCache.Observe();
-    }
-
     @SuppressWarnings("unused")
     @UiThread
     public static void clear(View view) {
@@ -55,16 +49,22 @@ public class ImageCache extends AbstractCache<ImageCache,
         ImageCacheFetcher.release();
     }
 
+    @Override
+    public ImageCache.Observe load(String url) {
+        mUri = url;
+        return new ImageCache.Observe();
+    }
+
     public class Observe extends AbsObserve<Observe,
             View, Bitmap, RequestOptions<Bitmap>> {
+
+        Observe() {
+            mRequestOptions = new RequestOptions<>();
+        }
 
         @Override
         protected int TAG() {
             return TAG_ID;
-        }
-
-        Observe() {
-            mRequestOptions = new RequestOptions<>();
         }
 
         @Override

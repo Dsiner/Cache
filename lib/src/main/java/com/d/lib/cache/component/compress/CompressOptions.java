@@ -12,9 +12,8 @@ import com.d.lib.cache.component.compress.strategy.CompressStrategy;
  * Created by D on 2018/12/20.
  **/
 public class CompressOptions<T> extends RequestOptions<T> {
-    InputStreamProvider provider;
-
     final BitmapOptions options = new BitmapOptions();
+    InputStreamProvider provider;
     int leastCompressSize;
     String path;
     String name;

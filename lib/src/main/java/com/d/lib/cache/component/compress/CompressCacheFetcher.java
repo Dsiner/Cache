@@ -8,7 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.d.lib.cache.base.AbstractCacheFetcher;
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -37,6 +37,34 @@ public abstract class CompressCacheFetcher<T>
         mContext = context.getApplicationContext();
         mCompressOptions = requestOptions;
         mPath = !TextUtils.isEmpty(requestOptions.path) ? requestOptions.path : PATH;
+    }
+
+    /**
+     * Returns a directory with the given name in the private cache directory of the application to
+     * use to store retrieved media and thumbnails.
+     *
+     * @param context   Context.
+     * @param cacheName The name of the subdirectory in which to store the cache.
+     */
+    private static File getImageCacheDir(Context context, String cacheName) {
+        File cacheDir = context.getExternalCacheDir();
+        if (cacheDir != null) {
+            File result = new File(cacheDir, cacheName);
+            if (!result.mkdirs() && (!result.exists() || !result.isDirectory())) {
+                // File wasn't able to create a directory, or the result exists but not a directory
+                return null;
+            }
+            return result;
+        }
+        if (Log.isLoggable(TAG, Log.ERROR)) {
+            Log.e(TAG, "default disk cache dir is null");
+        }
+        return null;
+    }
+
+    private static String getPath(String path) {
+        File file = new File(path);
+        return file.exists() || file.mkdirs() ? path : "";
     }
 
     public ByteArrayOutputStream compress() throws Exception {
@@ -97,34 +125,6 @@ public abstract class CompressCacheFetcher<T>
                 : filename)
                 + (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
         return new File(cacheBuilder);
-    }
-
-    /**
-     * Returns a directory with the given name in the private cache directory of the application to
-     * use to store retrieved media and thumbnails.
-     *
-     * @param context   Context.
-     * @param cacheName The name of the subdirectory in which to store the cache.
-     */
-    private static File getImageCacheDir(Context context, String cacheName) {
-        File cacheDir = context.getExternalCacheDir();
-        if (cacheDir != null) {
-            File result = new File(cacheDir, cacheName);
-            if (!result.mkdirs() && (!result.exists() || !result.isDirectory())) {
-                // File wasn't able to create a directory, or the result exists but not a directory
-                return null;
-            }
-            return result;
-        }
-        if (Log.isLoggable(TAG, Log.ERROR)) {
-            Log.e(TAG, "default disk cache dir is null");
-        }
-        return null;
-    }
-
-    private static String getPath(String path) {
-        File file = new File(path);
-        return file.exists() || file.mkdirs() ? path : "";
     }
 
     @Override

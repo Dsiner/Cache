@@ -17,8 +17,8 @@ import com.d.lib.cache.base.RequestOptions;
 import com.d.lib.cache.component.duration.DurationCache;
 import com.d.lib.cache.component.frame.FrameBean;
 import com.d.lib.cache.component.frame.FrameCache;
-import com.d.lib.cache.component.image.ImageCache;
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.component.imageloader.ImageCache;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private final String videoUrl = "http://vpls.cdn.videojj.com/scene/video02_720p.mp4";

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 import java.util.ArrayList;
 import java.util.HashMap;

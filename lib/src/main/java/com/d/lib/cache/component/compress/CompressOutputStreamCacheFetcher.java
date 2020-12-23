@@ -10,7 +10,7 @@ import com.d.lib.cache.base.DiskCacheStrategies;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -22,23 +22,15 @@ import java.util.List;
  */
 public class CompressOutputStreamCacheFetcher extends CompressCacheFetcher<ByteArrayOutputStream> {
 
-    private static class Singleton {
-        private volatile static LruCacheMap<String, ByteArrayOutputStream> CACHE = new LruCacheMap<>(12);
+    public CompressOutputStreamCacheFetcher(@NonNull Context context,
+                                            @NonNull CompressOptions requestOptions,
+                                            @Schedulers.Scheduler int scheduler,
+                                            @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
+    }
 
-        private static LruCacheMap<String, ByteArrayOutputStream> getInstance() {
-            if (CACHE == null) {
-                synchronized (Singleton.class) {
-                    if (CACHE == null) {
-                        CACHE = new LruCacheMap<>(0);
-                    }
-                }
-            }
-            return CACHE;
-        }
-
-        private static void release() {
-            CACHE = null;
-        }
+    public static void release() {
+        Singleton.release();
     }
 
     @Override
@@ -49,13 +41,6 @@ public class CompressOutputStreamCacheFetcher extends CompressCacheFetcher<ByteA
     @Override
     public HashMap<String, List<CacheListener<ByteArrayOutputStream>>> getHashMap() {
         return Singleton.getInstance().mHashMap;
-    }
-
-    public CompressOutputStreamCacheFetcher(@NonNull Context context,
-                                            @NonNull CompressOptions requestOptions,
-                                            @Schedulers.Scheduler int scheduler,
-                                            @Schedulers.Scheduler int observeOnScheduler) {
-        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -104,7 +89,22 @@ public class CompressOutputStreamCacheFetcher extends CompressCacheFetcher<ByteA
         A_CACHE.put(getPreFix() + url, value.toByteArray());
     }
 
-    public static void release() {
-        Singleton.release();
+    private static class Singleton {
+        private volatile static LruCacheMap<String, ByteArrayOutputStream> CACHE = new LruCacheMap<>(12);
+
+        private static LruCacheMap<String, ByteArrayOutputStream> getInstance() {
+            if (CACHE == null) {
+                synchronized (Singleton.class) {
+                    if (CACHE == null) {
+                        CACHE = new LruCacheMap<>(0);
+                    }
+                }
+            }
+            return CACHE;
+        }
+
+        private static void release() {
+            CACHE = null;
+        }
     }
 }

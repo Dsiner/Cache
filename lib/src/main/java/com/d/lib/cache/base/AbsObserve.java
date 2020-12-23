@@ -3,7 +3,7 @@ package com.d.lib.cache.base;
 import android.support.annotation.NonNull;
 import android.view.View;
 
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 import java.lang.ref.WeakReference;
 
@@ -17,12 +17,12 @@ public abstract class AbsObserve<C extends AbsObserve,
 
     protected abstract int TAG();
 
-    protected void setTarget(Target target) {
-        mTarget = new WeakReference<>(target);
-    }
-
     protected Target getTarget() {
         return mTarget != null ? mTarget.get() : null;
+    }
+
+    protected void setTarget(Target target) {
+        mTarget = new WeakReference<>(target);
     }
 
     protected Object getTag() {

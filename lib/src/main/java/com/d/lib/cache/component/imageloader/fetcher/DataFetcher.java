@@ -1,32 +1,11 @@
-package com.d.lib.cache.component.fetcher;
+package com.d.lib.cache.component.imageloader.fetcher;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.d.lib.cache.component.decoder.ResourceDecoder;
+import com.d.lib.cache.component.imageloader.decoder.ResourceDecoder;
 
 public interface DataFetcher<T> {
-
-    /**
-     * Callback that must be called when data has been loaded and is available, or when the load
-     * fails.
-     *
-     * @param <T> The type of data that will be loaded.
-     */
-    interface DataCallback<T> {
-
-        /**
-         * Called with the loaded data if the load succeeded, or with {@code null} if the load failed.
-         */
-        void onDataReady(@Nullable T data);
-
-        /**
-         * Called when the load fails.
-         *
-         * @param e a non-null {@link Exception} indicating why the load failed.
-         */
-        void onLoadFailed(@NonNull Exception e);
-    }
 
     /**
      * Fetch data from which a resource can be decoded.
@@ -80,5 +59,26 @@ public interface DataFetcher<T> {
      */
     @NonNull
     Class<T> getDataClass();
+
+    /**
+     * Callback that must be called when data has been loaded and is available, or when the load
+     * fails.
+     *
+     * @param <T> The type of data that will be loaded.
+     */
+    interface DataCallback<T> {
+
+        /**
+         * Called with the loaded data if the load succeeded, or with {@code null} if the load failed.
+         */
+        void onDataReady(@Nullable T data);
+
+        /**
+         * Called when the load fails.
+         *
+         * @param e a non-null {@link Exception} indicating why the load failed.
+         */
+        void onLoadFailed(@NonNull Exception e);
+    }
 }
 

@@ -1,6 +1,6 @@
 package com.d.lib.cache;
 
-import com.d.lib.cache.utils.threadpool.ThreadPool;
+import com.d.lib.cache.util.threadpool.ThreadPool;
 
 /**
  * Cache

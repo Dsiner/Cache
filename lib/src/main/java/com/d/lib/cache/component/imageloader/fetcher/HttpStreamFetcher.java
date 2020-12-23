@@ -1,10 +1,10 @@
-package com.d.lib.cache.component.fetcher;
+package com.d.lib.cache.component.imageloader.fetcher;
 
 import android.accounts.NetworkErrorException;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.d.lib.cache.utils.Preconditions;
+import com.d.lib.cache.util.Preconditions;
 
 import java.io.IOException;
 import java.io.InputStream;

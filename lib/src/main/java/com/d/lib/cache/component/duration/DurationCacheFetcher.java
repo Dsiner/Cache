@@ -15,7 +15,7 @@ import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
 import com.d.lib.cache.base.RequestOptions;
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,22 +26,48 @@ import java.util.List;
 public class DurationCacheFetcher extends AbstractCacheFetcher<DurationCacheFetcher,
         String, Long> {
 
-    private static class Singleton {
-        private volatile static LruCacheMap<String, Long> CACHE = new LruCacheMap<>(12);
+    public DurationCacheFetcher(@NonNull Context context,
+                                @NonNull RequestOptions requestOptions,
+                                @Schedulers.Scheduler int scheduler,
+                                @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
+    }
 
-        private static LruCacheMap<String, Long> getInstance() {
-            if (CACHE == null) {
-                synchronized (Singleton.class) {
-                    if (CACHE == null) {
-                        CACHE = new LruCacheMap<>(12);
-                    }
-                }
+    public static void release() {
+        Singleton.release();
+    }
+
+    public static long getThumbnailDuration(Context context, String uri) {
+        // Also can use ThumbnailUtils.createVideoThumbnail(url, MediaStore.Images.Thumbnails.MINI_KIND);
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH
+                    && uri.contains("://")) {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("User-Agent", "Mozilla/5.0 (Linux; U; Android 4.4.2; zh-CN;"
+                        + " MW-KW-001 Build/JRO03C) AppleWebKit/533.1 (KHTML, like Gecko) "
+                        + "Version/4.0 UCBrowser/1.0.0.001 U4/0.8.0 Mobile Safari/533.1");
+                mmr.setDataSource(uri, headers);
+            } else {
+                mmr.setDataSource(context, Uri.parse(uri));
             }
-            return CACHE;
-        }
-
-        private static void release() {
-            CACHE = null;
+            // Get duration(milliseconds)
+            long duration;
+            try {
+                duration = Long.parseLong(mmr.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_DURATION));
+            } catch (Throwable e) {
+                e.printStackTrace();
+                duration = -1;
+            }
+            return duration;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return -1;
+        } finally {
+            if (mmr != null) {
+                mmr.release();
+            }
         }
     }
 
@@ -55,13 +81,6 @@ public class DurationCacheFetcher extends AbstractCacheFetcher<DurationCacheFetc
         return Singleton.getInstance().mHashMap;
     }
 
-    public DurationCacheFetcher(@NonNull Context context,
-                                @NonNull RequestOptions requestOptions,
-                                @Schedulers.Scheduler int scheduler,
-                                @Schedulers.Scheduler int observeOnScheduler) {
-        super(context, requestOptions, scheduler, observeOnScheduler);
-    }
-
     @Override
     protected String getPreFix() {
         return PreFix.DURATION;
@@ -70,30 +89,14 @@ public class DurationCacheFetcher extends AbstractCacheFetcher<DurationCacheFetc
     @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Override
     protected void absLoad(Context context, String url, CacheListener<Long> listener) {
-        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && url.contains("://")) {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("User-Agent", "Mozilla/5.0 (Linux; U; Android 4.4.2; zh-CN;"
-                        + " MW-KW-001 Build/JRO03C) AppleWebKit/533.1 (KHTML, like Gecko) "
-                        + "Version/4.0 UCBrowser/1.0.0.001 U4/0.8.0 Mobile Safari/533.1");
-                mmr.setDataSource(url, headers);
-            } else {
-                mmr.setDataSource(context, Uri.parse(url));
-            }
-            // Get duration(milliseconds)
-            String strDuration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            long duration = Long.parseLong(strDuration);
+            final long duration = getThumbnailDuration(context, url);
             putDisk(url, duration);
             success(url, duration, listener);
         } catch (Throwable e) {
             Log.e("Cache", e.toString());
             e.printStackTrace();
             error(url, e, listener);
-        } finally {
-            if (mmr != null) {
-                mmr.release();
-            }
         }
     }
 
@@ -113,7 +116,22 @@ public class DurationCacheFetcher extends AbstractCacheFetcher<DurationCacheFetc
         A_CACHE.put(getPreFix() + url, value);
     }
 
-    public static void release() {
-        Singleton.release();
+    private static class Singleton {
+        private volatile static LruCacheMap<String, Long> CACHE = new LruCacheMap<>(12);
+
+        private static LruCacheMap<String, Long> getInstance() {
+            if (CACHE == null) {
+                synchronized (Singleton.class) {
+                    if (CACHE == null) {
+                        CACHE = new LruCacheMap<>(12);
+                    }
+                }
+            }
+            return CACHE;
+        }
+
+        private static void release() {
+            CACHE = null;
+        }
     }
 }

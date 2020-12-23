@@ -1,4 +1,4 @@
-package com.d.lib.cache.component.fetcher;
+package com.d.lib.cache.component.imageloader.fetcher;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -19,6 +19,11 @@ public final class ContentLengthInputStream extends FilterInputStream {
 
     private final long contentLength;
     private int readSoFar;
+
+    private ContentLengthInputStream(@NonNull InputStream in, long contentLength) {
+        super(in);
+        this.contentLength = contentLength;
+    }
 
     @NonNull
     public static InputStream obtain(@NonNull InputStream other,
@@ -43,11 +48,6 @@ public final class ContentLengthInputStream extends FilterInputStream {
             }
         }
         return result;
-    }
-
-    private ContentLengthInputStream(@NonNull InputStream in, long contentLength) {
-        super(in);
-        this.contentLength = contentLength;
     }
 
     @Override

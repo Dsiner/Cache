@@ -1,4 +1,4 @@
-package com.d.lib.cache.component.fetcher;
+package com.d.lib.cache.component.imageloader.fetcher;
 
 /*
  * Copyright (C) 2013 Square, Inc.

@@ -1,10 +1,10 @@
-package com.d.lib.cache.component.fetcher;
+package com.d.lib.cache.component.imageloader.fetcher;
 
 import android.accounts.NetworkErrorException;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.d.lib.cache.utils.Preconditions;
+import com.d.lib.cache.util.Preconditions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +20,7 @@ import okhttp3.ResponseBody;
  */
 public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Callback {
     private static final String TAG = "OkHttpFetcher";
+    private static volatile Call.Factory internalClient;
     private final Call.Factory client;
     private final String url;
     private InputStream stream;
@@ -29,7 +30,12 @@ public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Ca
     // accesses to variables may occur on different threads, but only one at a time.
     private volatile Call call;
 
-    private static volatile Call.Factory internalClient;
+    // Public API.
+    @SuppressWarnings("WeakerAccess")
+    public OkHttpStreamFetcher(String url) {
+        this.client = getInternalClient();
+        this.url = url;
+    }
 
     private static Call.Factory getInternalClient() {
         if (internalClient == null) {
@@ -40,13 +46,6 @@ public class OkHttpStreamFetcher implements DataFetcher<InputStream>, okhttp3.Ca
             }
         }
         return internalClient;
-    }
-
-    // Public API.
-    @SuppressWarnings("WeakerAccess")
-    public OkHttpStreamFetcher(String url) {
-        this.client = getInternalClient();
-        this.url = url;
     }
 
     @Override

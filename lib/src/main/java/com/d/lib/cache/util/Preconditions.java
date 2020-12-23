@@ -1,4 +1,4 @@
-package com.d.lib.cache.utils;
+package com.d.lib.cache.util;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;

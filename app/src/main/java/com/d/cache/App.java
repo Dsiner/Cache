@@ -4,7 +4,7 @@ import android.app.Application;
 import android.os.Environment;
 
 import com.d.lib.cache.Cache;
-import com.d.lib.cache.utils.threadpool.ThreadPool;
+import com.d.lib.cache.util.threadpool.ThreadPool;
 import com.d.lib.taskscheduler.TaskScheduler;
 
 /**
@@ -12,9 +12,9 @@ import com.d.lib.taskscheduler.TaskScheduler;
  * Created by D on 2018/8/25.
  */
 public class App extends Application {
-    public final static String FILE_PATH = Environment.getExternalStorageDirectory().getPath()
+    public static final String FILE_PATH = Environment.getExternalStorageDirectory().getPath()
             + "/Cache/compress";
-    public final static String PIC_NAME = "1.jpg";
+    public static final String PIC_NAME = "1.jpg";
 
     @Override
     public void onCreate() {

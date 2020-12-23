@@ -1,4 +1,4 @@
-package com.d.lib.cache.component.fetcher;
+package com.d.lib.cache.component.imageloader.fetcher;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

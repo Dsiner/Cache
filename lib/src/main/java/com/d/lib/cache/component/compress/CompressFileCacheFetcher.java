@@ -9,7 +9,7 @@ import com.d.lib.cache.base.CacheListener;
 import com.d.lib.cache.base.LruCache;
 import com.d.lib.cache.base.LruCacheMap;
 import com.d.lib.cache.base.PreFix;
-import com.d.lib.cache.utils.threadpool.Schedulers;
+import com.d.lib.cache.util.threadpool.Schedulers;
 
 import java.io.File;
 import java.util.HashMap;
@@ -20,23 +20,15 @@ import java.util.List;
  */
 public class CompressFileCacheFetcher extends CompressCacheFetcher<File> {
 
-    private static class Singleton {
-        private volatile static LruCacheMap<String, File> CACHE = new LruCacheMap<>(12);
+    public CompressFileCacheFetcher(@NonNull Context context,
+                                    @NonNull CompressOptions requestOptions,
+                                    @Schedulers.Scheduler int scheduler,
+                                    @Schedulers.Scheduler int observeOnScheduler) {
+        super(context, requestOptions, scheduler, observeOnScheduler);
+    }
 
-        private static LruCacheMap<String, File> getInstance() {
-            if (CACHE == null) {
-                synchronized (Singleton.class) {
-                    if (CACHE == null) {
-                        CACHE = new LruCacheMap<>(12);
-                    }
-                }
-            }
-            return CACHE;
-        }
-
-        private static void release() {
-            CACHE = null;
-        }
+    public static void release() {
+        Singleton.release();
     }
 
     @Override
@@ -47,13 +39,6 @@ public class CompressFileCacheFetcher extends CompressCacheFetcher<File> {
     @Override
     public HashMap<String, List<CacheListener<File>>> getHashMap() {
         return Singleton.getInstance().mHashMap;
-    }
-
-    public CompressFileCacheFetcher(@NonNull Context context,
-                                    @NonNull CompressOptions requestOptions,
-                                    @Schedulers.Scheduler int scheduler,
-                                    @Schedulers.Scheduler int observeOnScheduler) {
-        super(context, requestOptions, scheduler, observeOnScheduler);
     }
 
     @NonNull
@@ -75,7 +60,22 @@ public class CompressFileCacheFetcher extends CompressCacheFetcher<File> {
         }
     }
 
-    public static void release() {
-        Singleton.release();
+    private static class Singleton {
+        private volatile static LruCacheMap<String, File> CACHE = new LruCacheMap<>(12);
+
+        private static LruCacheMap<String, File> getInstance() {
+            if (CACHE == null) {
+                synchronized (Singleton.class) {
+                    if (CACHE == null) {
+                        CACHE = new LruCacheMap<>(12);
+                    }
+                }
+            }
+            return CACHE;
+        }
+
+        private static void release() {
+            CACHE = null;
+        }
     }
 }

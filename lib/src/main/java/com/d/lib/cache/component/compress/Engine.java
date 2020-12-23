@@ -26,43 +26,6 @@ public class Engine {
         initOptions();
     }
 
-    private void initOptions() throws IOException {
-        BitmapFactory.Options options = decodeStream(mProvider.open());
-        mOptions.width = options.outWidth;
-        mOptions.height = options.outHeight;
-        mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
-        if (Bitmap.CompressFormat.JPEG == mOptions.format) {
-            mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
-        }
-    }
-
-    ByteArrayOutputStream compress() throws IOException {
-        InputStream input = null;
-        try {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = false;
-            options.inDither = false;
-            options.inPurgeable = true;
-            options.inInputShareable = true;
-            options.inTempStorage = new byte[16 * 1024];
-            if (mRequestOptions.config != null) {
-                options.inPreferredConfig = mRequestOptions.config;
-            }
-            input = mProvider.open();
-            Bitmap bitmap = mRequestOptions.strategy.decodeStream(input, mOptions, options);
-            bitmap = mRequestOptions.strategy.matrix(bitmap, mOptions);
-            ByteArrayOutputStream stream = mRequestOptions.strategy.qualityCompress(bitmap,
-                    mOptions, mRequestOptions);
-            bitmap.recycle();
-            return stream;
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
-        } finally {
-            ImageUtil.closeQuietly(input);
-        }
-    }
-
     @Nullable
     public static BitmapFactory.Options decodeStream(final File file) {
         try {
@@ -105,5 +68,42 @@ public class Engine {
         }
         Log.d("Compress", "Compress size: " + outputStream.size() + " quality: " + quality);
         return outputStream;
+    }
+
+    private void initOptions() throws IOException {
+        BitmapFactory.Options options = decodeStream(mProvider.open());
+        mOptions.width = options.outWidth;
+        mOptions.height = options.outHeight;
+        mOptions.format = BitmapOptions.format(options.outMimeType.replace("image/", "."));
+        if (Bitmap.CompressFormat.JPEG == mOptions.format) {
+            mOptions.degree = ImageUtil.getImageDegree(mProvider.getPath());
+        }
+    }
+
+    ByteArrayOutputStream compress() throws IOException {
+        InputStream input = null;
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = false;
+            options.inDither = false;
+            options.inPurgeable = true;
+            options.inInputShareable = true;
+            options.inTempStorage = new byte[16 * 1024];
+            if (mRequestOptions.config != null) {
+                options.inPreferredConfig = mRequestOptions.config;
+            }
+            input = mProvider.open();
+            Bitmap bitmap = mRequestOptions.strategy.decodeStream(input, mOptions, options);
+            bitmap = mRequestOptions.strategy.matrix(bitmap, mOptions);
+            ByteArrayOutputStream stream = mRequestOptions.strategy.qualityCompress(bitmap,
+                    mOptions, mRequestOptions);
+            bitmap.recycle();
+            return stream;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            ImageUtil.closeQuietly(input);
+        }
     }
 }
